@@ -43,7 +43,6 @@
         })();
     </script>
     <style>
-        /* ==== ГЛОБАЛЬНЫЙ ФИКС ТАПА НА МОБИЛЬНЫХ ==== */
         * { -webkit-tap-highlight-color: transparent; }
         button, a, input, select, textarea, [onclick] { outline: none; -webkit-tap-highlight-color: transparent; }
         button:focus, a:focus, input:focus, select:focus, textarea:focus { outline: none; }
@@ -404,7 +403,6 @@
             </div>
 
             <div style="overflow-y: auto; flex-grow: 1; padding-right: 5px;">
-
                 <div id="admin-panel-users">
                     <input type="text" class="admin-search" id="admin-users-search" placeholder="🔍 Пошук за ім'ям або логіном..." oninput="renderAdminUsers()">
                     <div id="admin-users-list"></div>
@@ -455,7 +453,6 @@
                         <div id="admin-top-users"></div>
                     </div>
                 </div>
-
             </div>
 
             <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px; margin-top: 15px; text-align: right;">
@@ -472,15 +469,18 @@
                 <button id="tab-reg-btn" onclick="switchAuthTab('reg')">Реєстрація</button>
             </div>
             <form id="login-form" onsubmit="handleLogin(event)">
-                <input type="text" id="login-input" placeholder="Логін..." required>
+                <input type="text" id="login-input" placeholder="Email або логін..." required>
                 <input type="password" id="login-pass-input" placeholder="Пароль..." required>
+                <div id="login-error" style="color: #ff0055; font-size: 0.8rem; margin-top: 8px; display: none;"></div>
                 <button type="submit" class="btn-glow" style="width: 100%; margin-top: 15px;">Увійти</button>
             </form>
             <form id="reg-form" style="display: none;" onsubmit="handleRegister(event)">
-                <input type="text" id="reg-login-input" placeholder="Логін..." required>
-                <input type="password" id="reg-pass-input" placeholder="Пароль..." required>
+                <input type="text" id="reg-login-input" placeholder="Логін (латиниця, 3+ симв.)..." required minlength="3">
+                <input type="email" id="reg-email-input" placeholder="Email (example@gmail.com)..." required>
+                <input type="password" id="reg-pass-input" placeholder="Пароль (6+ симв.)..." required minlength="6">
                 <input type="text" id="reg-name-input" placeholder="Ім'я та прізвище..." required>
                 <select id="reg-city-select" class="city-select" required></select>
+                <div id="reg-error" style="color: #ff0055; font-size: 0.8rem; margin-top: 8px; display: none;"></div>
                 <button type="submit" class="btn-glow" style="width: 100%; margin-top: 15px;">Зареєструватися</button>
             </form>
         </div>
@@ -1305,6 +1305,8 @@
             e.preventDefault();
             const login = document.getElementById('login-input').value.trim();
             const password = document.getElementById('login-pass-input').value.trim();
+            const errEl = document.getElementById('login-error');
+            errEl.style.display = 'none';
             try {
                 const res = await fetch('/api/login', {
                     method: 'POST',
@@ -1313,7 +1315,7 @@
                 });
                 const data = await res.json();
                 if (res.status === 403 && data.isBanned) { showBanModal(data.banReason, data.banUntil); return; }
-                if (!res.ok) return alert(data.error || "Помилка входу!");
+                if (!res.ok) { errEl.textContent = data.error || "Помилка входу!"; errEl.style.display = 'block'; return; }
                 currentUser = data;
                 localStorage.setItem('vmereshi_user', JSON.stringify(currentUser));
                 document.getElementById('auth-modal').style.display = 'none';
@@ -1322,23 +1324,31 @@
                 loadUserData();
                 updateNotificationsBadge();
                 updateNotifsBadge();
-            } catch (err) { alert("Помилка авторизації!"); }
+            } catch (err) { errEl.textContent = "Помилка авторизації!"; errEl.style.display = 'block'; }
         }
 
         async function handleRegister(e) {
             e.preventDefault();
             const login = document.getElementById('reg-login-input').value.trim();
+            const email = document.getElementById('reg-email-input').value.trim();
             const password = document.getElementById('reg-pass-input').value.trim();
             const name = document.getElementById('reg-name-input').value.trim();
             const city = document.getElementById('reg-city-select').value;
+            const errEl = document.getElementById('reg-error');
+            errEl.style.display = 'none';
+
+            if (login.length < 3) { errEl.textContent = 'Логін має бути не менше 3 символів'; errEl.style.display = 'block'; return; }
+            if (password.length < 6) { errEl.textContent = 'Пароль має бути не менше 6 символів'; errEl.style.display = 'block'; return; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = 'Невірний формат email'; errEl.style.display = 'block'; return; }
+
             try {
                 const res = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ login, password, name, city })
+                    body: JSON.stringify({ login, email, password, name, city })
                 });
                 const data = await res.json();
-                if (!res.ok) return alert(data.error);
+                if (!res.ok) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
                 currentUser = data;
                 localStorage.setItem('vmereshi_user', JSON.stringify(currentUser));
                 document.getElementById('auth-modal').style.display = 'none';
@@ -1347,7 +1357,7 @@
                 loadUserData();
                 updateNotificationsBadge();
                 updateNotifsBadge();
-            } catch (err) { alert("Помилка реєстрації!"); }
+            } catch (err) { errEl.textContent = "Помилка реєстрації!"; errEl.style.display = 'block'; }
         }
 
         function logout() {
@@ -1461,7 +1471,8 @@
             if (search) {
                 users = users.filter(u => 
                     (u.name || '').toLowerCase().includes(search) || 
-                    (u.login || '').toLowerCase().includes(search)
+                    (u.login || '').toLowerCase().includes(search) ||
+                    (u.email || '').toLowerCase().includes(search)
                 );
             }
             if (users.length === 0) {
@@ -1532,7 +1543,7 @@
                         <div class="admin-user-header">
                             <div class="admin-user-info">
                                 <strong>${u.name} <span style="color: #94a3b8; font-weight: 400;">(@${u.login})</span></strong>
-                                <span>${u.city} • ${u.friendsCount} друзів • ID: ${u.id}</span>
+                                <span>${u.email || '—'} • ${u.city} • ${u.friendsCount} друзів • ID: ${u.id}</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <span class="admin-role-badge ${roleClass}">${u.role}</span>
