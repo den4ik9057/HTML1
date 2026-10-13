@@ -71,6 +71,29 @@
             .attach-icons i:active { color: #00f2fe; transform: scale(1.1); }
         }
 
+        /* ══════ ONLINE STATUS DOTS ══════ */
+        .avatar-wrap-online { position: relative; display: inline-block; line-height: 0; }
+        .online-dot {
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid #0a0f1a;
+            background: #ff0055;
+            z-index: 5;
+            transition: background 0.3s;
+        }
+        .online-dot.online { background: #00ff88; box-shadow: 0 0 8px rgba(0,255,136,0.7); }
+        .online-dot.offline { background: #ff0055; box-shadow: 0 0 6px rgba(255,0,85,0.4); }
+        .online-dot.small { width: 11px; height: 11px; }
+        .online-dot.tiny { width: 9px; height: 9px; border-width: 1.5px; }
+
+        .status-text-online { color: #00ff88; font-weight: 600; }
+        .status-text-offline { color: #94a3b8; font-weight: 500; }
+
+        /* ══════ ADMIN ══════ */
         .admin-tabs { display: flex; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; flex-wrap: wrap; }
         .admin-tab { padding: 10px 16px; background: none; border: none; color: #94a3b8; cursor: pointer; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid transparent; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
         .admin-tab:hover { color: #00f2fe; }
@@ -113,38 +136,16 @@
         .admin-post-item .post-stats-admin { color: #64748b; font-size: 0.7rem; margin-top: 4px; }
         .admin-empty { color: #64748b; text-align: center; padding: 30px; font-size: 0.9rem; }
 
-        /* ==== VOLUME CONTROL ==== */
         .volume-control { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #64748b; margin-bottom: 12px; }
         .volume-control i { cursor: pointer; width: 20px; text-align: center; transition: 0.2s; font-size: 1rem; }
         .volume-control i:hover { color: #00f2fe; }
         .volume-control input[type="range"] { flex-grow: 1; accent-color: #00f2fe; cursor: pointer; height: 4px; }
 
-        .mobile-menu-btn {
-            display: none;
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.3rem;
-            cursor: pointer;
-            padding: 8px;
-            margin-right: 8px;
-            transition: color 0.2s;
-            outline: none;
-            -webkit-tap-highlight-color: transparent;
-        }
+        .mobile-menu-btn { display: none; background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; padding: 8px; margin-right: 8px; transition: color 0.2s; outline: none; -webkit-tap-highlight-color: transparent; }
         .mobile-menu-btn:hover { color: #00f2fe; }
         body.theme-light .mobile-menu-btn { color: #1e293b; }
 
-        .mobile-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.65);
-            backdrop-filter: blur(4px);
-            z-index: 98;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
+        .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); z-index: 98; opacity: 0; transition: opacity 0.3s; }
         .mobile-overlay.active { display: block; opacity: 1; }
 
         @media (max-width: 1024px) {
@@ -164,22 +165,7 @@
             .settings-btn { width: 34px; height: 34px; margin-left: 0; outline: none; -webkit-tap-highlight-color: transparent; }
             .user-mini > button:last-child { margin-left: 2px !important; }
 
-            .sidebar {
-                position: fixed;
-                top: 0;
-                left: -300px;
-                width: 280px;
-                height: 100vh;
-                background: rgba(10, 15, 26, 0.98);
-                backdrop-filter: blur(20px);
-                -webkit-backdrop-filter: blur(20px);
-                z-index: 99;
-                padding: 70px 15px 20px;
-                overflow-y: auto;
-                transition: left 0.3s ease;
-                border-right: 1px solid rgba(255,255,255,0.08);
-                margin: 0;
-            }
+            .sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100vh; background: rgba(10, 15, 26, 0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 99; padding: 70px 15px 20px; overflow-y: auto; transition: left 0.3s ease; border-right: 1px solid rgba(255,255,255,0.08); margin: 0; }
             body.theme-light .sidebar { background: rgba(241, 245, 249, 0.99); border-right-color: rgba(0,0,0,0.08); }
             body.theme-retro .sidebar { background: rgba(10, 5, 18, 0.98); border-right-color: rgba(255,0,255,0.15); }
             .sidebar.open { left: 0; box-shadow: 20px 0 60px rgba(0,0,0,0.5); }
@@ -196,13 +182,7 @@
             .post-actions { flex-wrap: wrap; gap: 10px; }
 
             .modal-overlay { padding: 10px; align-items: flex-start; }
-            .modal-overlay > .glass-card {
-                max-height: 95vh !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                padding: 16px !important;
-                border-radius: 14px !important;
-            }
+            .modal-overlay > .glass-card { max-height: 95vh !important; width: 100% !important; max-width: 100% !important; padding: 16px !important; border-radius: 14px !important; }
 
             .admin-tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 5px; }
             .admin-tab { white-space: nowrap; padding: 8px 12px; font-size: 0.82rem; }
@@ -212,35 +192,10 @@
 
             #messenger-section { height: auto !important; max-height: none !important; }
             #messenger-section > div:last-child { flex-direction: column !important; }
-            #messenger-chats-list {
-                width: 100% !important;
-                border-right: none !important;
-                border-bottom: 1px solid rgba(255,255,255,0.08);
-                max-height: 200px;
-                padding-right: 0 !important;
-                padding-bottom: 10px;
-            }
+            #messenger-chats-list { width: 100% !important; border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.08); max-height: 200px; padding-right: 0 !important; padding-bottom: 10px; }
 
-            .right-sidebar {
-                display: block;
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                z-index: 90;
-                padding: 0 8px 8px;
-                margin: 0;
-                pointer-events: none;
-            }
-            .right-sidebar .player-widget {
-                pointer-events: auto;
-                max-height: 64px;
-                overflow: hidden;
-                transition: max-height 0.35s ease;
-                border-radius: 14px;
-                padding: 12px 40px 12px 14px;
-                position: relative;
-            }
+            .right-sidebar { display: block; position: fixed; bottom: 0; left: 0; right: 0; z-index: 90; padding: 0 8px 8px; margin: 0; pointer-events: none; }
+            .right-sidebar .player-widget { pointer-events: auto; max-height: 64px; overflow: hidden; transition: max-height 0.35s ease; border-radius: 14px; padding: 12px 40px 12px 14px; position: relative; }
             .right-sidebar .player-widget.expanded { max-height: 75vh; overflow-y: auto; }
             .right-sidebar .player-widget h3 { display: none; }
             .right-sidebar .player-widget:not(.expanded) .time-slider-container,
@@ -249,15 +204,7 @@
             .right-sidebar .player-widget:not(.expanded) .mini-playlist { display: none; }
             .right-sidebar .player-widget:not(.expanded) .now-playing { margin-bottom: 0; cursor: pointer; }
             .right-sidebar .player-widget:not(.expanded) .now-playing .track-details .artist { font-size: 0.7rem; }
-            .right-sidebar .player-widget::after {
-                content: '▲';
-                position: absolute;
-                top: 12px;
-                right: 14px;
-                font-size: 0.7rem;
-                color: #64748b;
-                transition: transform 0.3s;
-            }
+            .right-sidebar .player-widget::after { content: '▲'; position: absolute; top: 12px; right: 14px; font-size: 0.7rem; color: #64748b; transition: transform 0.3s; }
             .right-sidebar .player-widget.expanded::after { content: '▼'; }
 
             body { padding-bottom: 85px; }
@@ -267,22 +214,11 @@
             body.player-expanded .victoria-float-btn { display: none; }
             body.player-expanded .victoria-chat-container { display: none !important; }
 
-            .victoria-chat-container {
-                left: 10px;
-                right: 10px;
-                bottom: 150px;
-                width: auto;
-                height: 60vh;
-                max-height: 500px;
-            }
+            .victoria-chat-container { left: 10px; right: 10px; bottom: 150px; width: auto; height: 60vh; max-height: 500px; }
 
             #friends-list > div,
             #search-results-container > div,
-            #friend-requests-list > div {
-                flex-direction: column !important;
-                align-items: stretch !important;
-                gap: 10px !important;
-            }
+            #friend-requests-list > div { flex-direction: column !important; align-items: stretch !important; gap: 10px !important; }
             #friends-list > div > div:last-child,
             #search-results-container > div > div:last-child { flex-wrap: wrap; justify-content: flex-end; }
 
@@ -520,9 +456,9 @@
             </div>
             <div class="user-mini">
                 <span id="header-name">Гість</span>
-                <div class="avatar-wrapper">
+                <div class="avatar-wrapper" style="position: relative;">
                     <div id="header-avatar" class="user-avatar-icon dev"></div>
-                    <span class="online-badge"></span>
+                    <span id="header-online-dot" class="online-dot small online"></span>
                 </div>
                 <button class="settings-btn" onclick="openSettings()" title="Налаштування"><i class="fa-solid fa-gear"></i></button>
                 <button onclick="logout()" style="background:none; border:none; color:#ff0055; cursor:pointer; font-size:1.1rem; margin-left:6px;" title="Вийти"><i class="fa-solid fa-right-from-bracket"></i></button>
@@ -560,7 +496,10 @@
             <section id="tab-profile" class="tab-content active">
                 <div class="glass-card profile-card">
                     <div class="profile-avatar-container">
-                        <div id="profile-avatar" class="user-avatar-icon big dev"></div>
+                        <div style="position: relative; display: inline-block;">
+                            <div id="profile-avatar" class="user-avatar-icon big dev"></div>
+                            <span id="profile-online-dot" class="online-dot online" style="width: 22px; height: 22px;"></span>
+                        </div>
                         <button id="open-edit-btn" class="btn-glow">Редагувати</button>
                     </div>
                     <div class="profile-info">
@@ -645,10 +584,13 @@
                             </div>
                             <div id="messenger-chat-area" style="display:none; flex-direction:column; height:100%;">
                                 <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; margin-bottom: 10px;">
-                                    <div id="messenger-target-avatar" class="user-avatar-icon" style="width:36px; height:36px; font-size:0.8rem;"></div>
+                                    <div style="position: relative; display: inline-block;">
+                                        <div id="messenger-target-avatar" class="user-avatar-icon" style="width:36px; height:36px; font-size:0.8rem;"></div>
+                                        <span id="messenger-target-dot" class="online-dot tiny offline"></span>
+                                    </div>
                                     <div>
                                         <h3 id="messenger-target-name" style="font-size: 0.95rem; color: #00f2fe; margin:0;">...</h3>
-                                        <span style="font-size: 0.7rem; color: #00f2fe;"><i class="fa-solid fa-comments"></i> Приватний діалог</span>
+                                        <span id="messenger-target-status" style="font-size: 0.7rem; color: #94a3b8;"><i class="fa-solid fa-comments"></i> Приватний діалог</span>
                                     </div>
                                 </div>
                                 <div id="messenger-messages-container" style="overflow-y: auto; flex-grow: 1; padding: 5px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
@@ -670,11 +612,15 @@
                 </div>
                 <div class="glass-card profile-card" style="margin-bottom: 20px;">
                     <div class="profile-avatar-container">
-                        <div id="view-user-avatar" class="user-avatar-icon big"></div>
+                        <div style="position: relative; display: inline-block;">
+                            <div id="view-user-avatar" class="user-avatar-icon big"></div>
+                            <span id="view-user-online-dot" class="online-dot offline" style="width: 22px; height: 22px;"></span>
+                        </div>
                     </div>
                     <div class="profile-info" style="flex-grow: 1;">
                         <h2 id="view-user-name">...</h2>
                         <p class="status-text" id="view-user-status">...</p>
+                        <p id="view-user-last-seen" style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;"></p>
                         <div class="info-badges">
                             <span class="badge-item"><i class="fa-solid fa-location-dot"></i> <span id="view-user-city">...</span></span>
                             <span class="badge-item" id="view-user-role-badge"><i class="fa-solid fa-code"></i> <span id="view-user-role">User</span></span>
@@ -759,7 +705,7 @@
     </div>
 
     <audio id="audio-player"></audio>
-        <script>
+    <script>
         const ukraineCities = ["Миколаїв","Київ","Харків","Одеса","Дніпро","Запоріжжя","Львів","Кривий Ріг","Вінниця","Херсон","Полтава","Чернігів","Черкаси","Житомир","Суми","Хмельницький","Чернівці","Рівне","Кам'янське","Кропивницький","Івано-Франківськ","Кременчук","Тернопіль","Луцьк","Біла Церква","Ужгород","Нікополь","Слов'янськ","Бердянськ","Алчевськ","Павлоград","Бровари","Кам'янець-Подільський","Олександрія","Сімферополь","Севастополь","Керч","Євпаторія","Ялта","Феодосія","Джанкой","Алушта","Бахчисарай","Саки","Армянськ","Красноперекопськ","Судак","Білогірськ","Нижньогірський","Совєтський","Чорноморське","Роздольне","Первомайське","Леніне","Кіровське","Старий Крим","Алупка","Інкерман","Щолкіне","Молодіжне","Мирний"].sort();
 
         let currentUser = null;
@@ -777,6 +723,7 @@
         let notificationsOpenFlag = false;
         let previousTabId = 'tab-news';
         let currentViewUserId = null;
+        let heartbeatInterval = null;
 
         let adminUsersCache = [];
         let adminPostsCache = [];
@@ -784,6 +731,53 @@
 
         const audio = document.getElementById('audio-player');
         const ADMIN_PASS_HASH = '0x' + '1de';
+        const ONLINE_THRESHOLD = 2 * 60 * 1000; // 2 хвилини
+
+        // ══════ ONLINE: допоміжні функції ══════
+        function isUserOnline(user) {
+            if (!user || !user.lastSeen) return false;
+            return (Date.now() - user.lastSeen) < ONLINE_THRESHOLD;
+        }
+
+        function getOnlineDotHtml(user, size = 'small') {
+            const online = isUserOnline(user);
+            const cls = `online-dot ${size} ${online ? 'online' : 'offline'}`;
+            const title = online ? 'Онлайн' : 'Офлайн';
+            return `<span class="${cls}" title="${title}"></span>`;
+        }
+
+        function getLastSeenText(user) {
+            if (!user || !user.lastSeen) return 'Ніколи не заходив(ла)';
+            const diff = Date.now() - user.lastSeen;
+            if (diff < ONLINE_THRESHOLD) return '🟢 Онлайн';
+            const mins = Math.floor(diff / 60000);
+            if (mins < 60) return `🔴 Був(ла) ${mins} хв тому`;
+            const hours = Math.floor(mins / 60);
+            if (hours < 24) return `🔴 Був(ла) ${hours} год тому`;
+            const days = Math.floor(hours / 24);
+            if (days < 30) return `🔴 Був(ла) ${days} дн тому`;
+            return '🔴 Давно не заходив(ла)';
+        }
+
+        // ══════ ONLINE: пульс кожні 30 сек ══════
+        function startHeartbeat() {
+            if (!currentUser) return;
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+            const beat = () => {
+                if (!currentUser) return;
+                fetch('/api/heartbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser.id })
+                }).catch(() => {});
+            };
+            beat(); // одразу
+            heartbeatInterval = setInterval(beat, 30000); // кожні 30 сек
+        }
+
+        function stopHeartbeat() {
+            if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
+        }
 
         function setTheme(theme) {
             document.body.classList.remove('theme-classic', 'theme-light', 'theme-retro');
@@ -838,6 +832,10 @@
             initNavigation();
             initAudioEvents();
 
+            // ══════ ONLINE: після закриття/згортання — не шлемо пульс одразу, але при зворотньому фокусі — одразу ══════
+            window.addEventListener('focus', () => { if (currentUser) fetch('/api/heartbeat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser.id }) }).catch(()=>{}); });
+            window.addEventListener('beforeunload', stopHeartbeat);
+
             setInterval(() => {
                 if (document.hidden) return;
                 if (currentUser) {
@@ -883,6 +881,7 @@
                 loadUserData();
                 updateNotificationsBadge();
                 updateNotifsBadge();
+                startHeartbeat(); // ══════ ONLINE ══════
             } else {
                 document.getElementById('auth-modal').style.display = 'flex';
             }
@@ -1027,6 +1026,7 @@
             document.getElementById('admin-modal').style.display = 'none';
             document.getElementById('ban-modal').style.display = 'flex';
             document.getElementById('ban-modal-reason').innerText = reason || "Порушення правил спільноти";
+            stopHeartbeat();
             if (banTimerInterval) clearInterval(banTimerInterval);
             if (!banUntil) {
                 document.getElementById('ban-modal-time').innerText = "Назавжди (безтерміново)";
@@ -1046,6 +1046,7 @@
             document.getElementById('ban-modal').style.display = 'none';
             if (banTimerInterval) clearInterval(banTimerInterval);
             if (currentUser) { currentUser.isBanned = false; localStorage.setItem('vmereshi_user', JSON.stringify(currentUser)); }
+            startHeartbeat();
         }
 
         function renderMessengerChats(friends) {
@@ -1055,7 +1056,8 @@
             listEl.innerHTML = '';
             friends.forEach(f => {
                 const isActive = activeMessengerUserId === f.id;
-                listEl.innerHTML += `<div onclick="selectMessengerChat(${f.id}, '${f.name}', '${f.avatarType}')" style="display:flex; align-items:center; gap:10px; background:${isActive ? 'rgba(0,242,254,0.15)' : 'rgba(0,0,0,0.3)'}; border:1px solid ${isActive ? 'rgba(0,242,254,0.3)' : 'rgba(255,255,255,0.05)'}; padding:10px; border-radius:10px; cursor:pointer;"><div class="user-avatar-icon ${f.avatarType}" style="width:36px; height:36px; font-size:0.85rem;">${getAvatarIcon(f.avatarType)}</div><div style="overflow:hidden;"><div style="font-weight:600; font-size:0.9rem; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${f.name}</div><div style="font-size:0.7rem; color:#00f2fe;">@${f.login}</div></div></div>`;
+                const online = isUserOnline(f);
+                listEl.innerHTML += `<div onclick="selectMessengerChat(${f.id}, '${f.name}', '${f.avatarType}')" style="display:flex; align-items:center; gap:10px; background:${isActive ? 'rgba(0,242,254,0.15)' : 'rgba(0,0,0,0.3)'}; border:1px solid ${isActive ? 'rgba(0,242,254,0.3)' : 'rgba(255,255,255,0.05)'}; padding:10px; border-radius:10px; cursor:pointer;"><div style="position: relative;"><div class="user-avatar-icon ${f.avatarType}" style="width:36px; height:36px; font-size:0.85rem;">${getAvatarIcon(f.avatarType)}</div>${getOnlineDotHtml(f, 'tiny')}</div><div style="overflow:hidden;"><div style="font-weight:600; font-size:0.9rem; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${f.name}</div><div style="font-size:0.7rem; color:${online ? '#00ff88' : '#94a3b8'};">@${f.login}</div></div></div>`;
             });
         }
 
@@ -1068,7 +1070,20 @@
             const avatarEl = document.getElementById('messenger-target-avatar');
             avatarEl.className = `user-avatar-icon ${avatarType}`;
             avatarEl.innerHTML = getAvatarIcon(avatarType);
+            // ══════ ONLINE: статус у мессенджері ══════
+            const friend = cachedFriends.find(x => x.id === userId);
+            updateMessengerTargetStatus(friend);
             loadMessengerMessages(userId);
+        }
+
+        function updateMessengerTargetStatus(friend) {
+            const dotEl = document.getElementById('messenger-target-dot');
+            const statusEl = document.getElementById('messenger-target-status');
+            if (!dotEl || !statusEl) return;
+            if (!friend) { dotEl.className = 'online-dot tiny offline'; statusEl.innerHTML = '<i class="fa-solid fa-comments"></i> Приватний діалог'; return; }
+            const online = isUserOnline(friend);
+            dotEl.className = `online-dot tiny ${online ? 'online' : 'offline'}`;
+            statusEl.innerHTML = online ? '<span style="color:#00ff88;">🟢 Онлайн</span>' : `<span style="color:#94a3b8;">${getLastSeenText(friend)}</span>`;
         }
 
         async function loadMessengerMessages(userId, background = false) {
@@ -1139,7 +1154,7 @@
                 reqCounter.innerText = requests.length;
                 reqListEl.innerHTML = '';
                 requests.forEach(r => {
-                    reqListEl.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:10px;"><div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openUserProfile(${r.id})"><div class="user-avatar-icon ${r.avatarType}" style="width:36px; height:36px; font-size:0.9rem;">${getAvatarIcon(r.avatarType)}</div><div><div style="font-weight:600; font-size:0.9rem; color:#fff;">${r.name}</div><div style="font-size:0.75rem; color:#94a3b8;">@${r.login} • Нова заявка!</div></div></div><div style="display:flex; gap:6px;"><button onclick="acceptFriend(${r.id})" class="btn-glow" style="padding:6px 10px; font-size:0.8rem;">Прийняти</button><button onclick="rejectFriend(${r.id})" style="background:#334155; color:#fff; border:none; border-radius:8px; padding:6px 10px; font-size:0.8rem; cursor:pointer;">Відхилити</button></div></div>`;
+                    reqListEl.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:10px;"><div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openUserProfile(${r.id})"><div style="position: relative;"><div class="user-avatar-icon ${r.avatarType}" style="width:36px; height:36px; font-size:0.9rem;">${getAvatarIcon(r.avatarType)}</div>${getOnlineDotHtml(r, 'tiny')}</div><div><div style="font-weight:600; font-size:0.9rem; color:#fff;">${r.name}</div><div style="font-size:0.75rem; color:#94a3b8;">@${r.login} • Нова заявка!</div></div></div><div style="display:flex; gap:6px;"><button onclick="acceptFriend(${r.id})" class="btn-glow" style="padding:6px 10px; font-size:0.8rem;">Прийняти</button><button onclick="rejectFriend(${r.id})" style="background:#334155; color:#fff; border:none; border-radius:8px; padding:6px 10px; font-size:0.8rem; cursor:pointer;">Відхилити</button></div></div>`;
                 });
             } else reqCard.style.display = 'none';
 
@@ -1147,7 +1162,8 @@
             if (friends.length === 0) friendsListEl.innerHTML = `<p style="color:#64748b; font-size:0.9rem;">Список друзів порожній.</p>`;
             else {
                 friends.forEach(f => {
-                    friendsListEl.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:10px 14px; border-radius:10px;"><div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="openUserProfile(${f.id})"><div class="user-avatar-icon ${f.avatarType}" style="width:40px; height:40px; font-size:1rem;">${getAvatarIcon(f.avatarType)}</div><div><div style="font-weight:600; font-size:0.9rem; color:#fff;">${f.name}</div><div style="font-size:0.75rem; color:#00f2fe;">${f.city} • @${f.login}</div></div></div><div style="display:flex; gap:8px;"><button onclick="switchToMessagesAndOpen(${f.id}, '${f.name}', '${f.avatarType}')" class="btn-glow" style="padding:6px 12px; font-size:0.8rem;"><i class="fa-solid fa-comment"></i> Написати</button><button onclick="removeFriend(${f.id})" title="Видалити з друзів" style="background:#ff0055; color:#fff; border:none; border-radius:8px; padding:6px 10px; font-size:0.8rem; cursor:pointer;"><i class="fa-solid fa-user-minus"></i></button></div></div>`;
+                    const online = isUserOnline(f);
+                    friendsListEl.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:10px 14px; border-radius:10px;"><div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="openUserProfile(${f.id})"><div style="position: relative;"><div class="user-avatar-icon ${f.avatarType}" style="width:40px; height:40px; font-size:1rem;">${getAvatarIcon(f.avatarType)}</div>${getOnlineDotHtml(f, 'small')}</div><div><div style="font-weight:600; font-size:0.9rem; color:#fff;">${f.name}</div><div style="font-size:0.75rem; color:${online ? '#00ff88' : '#00f2fe'};">${f.city} • @${f.login}</div></div></div><div style="display:flex; gap:8px;"><button onclick="switchToMessagesAndOpen(${f.id}, '${f.name}', '${f.avatarType}')" class="btn-glow" style="padding:6px 12px; font-size:0.8rem;"><i class="fa-solid fa-comment"></i> Написати</button><button onclick="removeFriend(${f.id})" title="Видалити з друзів" style="background:#ff0055; color:#fff; border:none; border-radius:8px; padding:6px 10px; font-size:0.8rem; cursor:pointer;"><i class="fa-solid fa-user-minus"></i></button></div></div>`;
                 });
             }
         }
@@ -1172,7 +1188,7 @@
                     else if (isRequestSent) actionHtml = '<span style="color:#94a3b8; font-size:0.85rem; font-weight:600;"><i class="fa-solid fa-clock"></i> Запит надіслано</span>';
                     else if (isIncoming) actionHtml = `<button onclick="acceptFriend(${u.id})" class="btn-glow" style="padding:6px 12px; font-size:0.8rem;">Прийняти</button>`;
                     else actionHtml = `<button onclick="sendFriendRequest(${u.id})" class="btn-glow" style="padding:6px 12px; font-size:0.8rem;">Додати</button>`;
-                    container.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:10px;"><div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openUserProfile(${u.id})"><div class="user-avatar-icon ${u.avatarType}" style="width:36px; height:36px; font-size:0.9rem;">${getAvatarIcon(u.avatarType)}</div><div><div style="font-weight:600; font-size:0.9rem; color:#fff;">${u.name}</div><div style="font-size:0.75rem; color:#94a3b8;">${u.city} • @${u.login}</div></div></div><div>${actionHtml}</div></div>`;
+                    container.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:10px;"><div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openUserProfile(${u.id})"><div style="position: relative;"><div class="user-avatar-icon ${u.avatarType}" style="width:36px; height:36px; font-size:0.9rem;">${getAvatarIcon(u.avatarType)}</div>${getOnlineDotHtml(u, 'tiny')}</div><div><div style="font-weight:600; font-size:0.9rem; color:#fff;">${u.name}</div><div style="font-size:0.75rem; color:#94a3b8;">${u.city} • @${u.login}</div></div></div><div>${actionHtml}</div></div>`;
                 });
             } catch (e) { console.error(e); }
         }
@@ -1263,6 +1279,14 @@
                 document.getElementById('view-user-posts-count').innerText = (data.posts || []).length;
                 document.getElementById('view-user-login').innerText = u.login;
                 document.getElementById('view-user-role').innerText = u.role;
+
+                // ══════ ONLINE: точка + статус ══════
+                const dotEl = document.getElementById('view-user-online-dot');
+                dotEl.className = `online-dot ${isUserOnline(u) ? 'online' : 'offline'}`;
+                dotEl.style.width = '22px'; dotEl.style.height = '22px';
+                const lastSeenEl = document.getElementById('view-user-last-seen');
+                if (lastSeenEl) lastSeenEl.innerText = getLastSeenText(u);
+
                 const avatarEl = document.getElementById('view-user-avatar');
                 avatarEl.className = `user-avatar-icon big ${u.avatarType}`;
                 avatarEl.innerHTML = getAvatarIcon(u.avatarType);
@@ -1342,6 +1366,7 @@
                 loadUserData();
                 updateNotificationsBadge();
                 updateNotifsBadge();
+                startHeartbeat(); // ══════ ONLINE ══════
             } catch (err) { errEl.textContent = "Помилка авторизації!"; errEl.style.display = 'block'; }
         }
 
@@ -1373,10 +1398,12 @@
                 loadUserData();
                 updateNotificationsBadge();
                 updateNotifsBadge();
+                startHeartbeat(); // ══════ ONLINE ══════
             } catch (err) { errEl.textContent = "Помилка реєстрації!"; errEl.style.display = 'block'; }
         }
 
         function logout() {
+            stopHeartbeat();
             localStorage.removeItem('vmereshi_user');
             currentUser = null;
             location.reload();
@@ -1499,8 +1526,10 @@
             users.forEach(u => {
                 const isSelf = u.id === currentUser.id;
                 const roleClass = u.role === 'Developer' ? 'developer' : u.role === 'Moderator' ? 'moderator' : 'user';
+                const online = isUserOnline(u);
                 const banStatus = u.isBanned ? '🔴 Забанений' : '🟢 Активний';
                 const banColor = u.isBanned ? '#ff0055' : '#00ff88';
+                const onlineBadge = online ? '<span style="color: #00ff88; font-size: 0.75rem; font-weight: 600; margin-left: 8px;">🟢 Онлайн</span>' : '<span style="color: #94a3b8; font-size: 0.75rem; font-weight: 600; margin-left: 8px;">⚫ Офлайн</span>';
 
                 let actionsHtml = '';
                 if (!isSelf) {
@@ -1557,7 +1586,7 @@
                     <div class="admin-user-card">
                         <div class="admin-user-header">
                             <div class="admin-user-info">
-                                <strong>${u.name} <span style="color: #94a3b8; font-weight: 400;">(@${u.login})</span></strong>
+                                <strong>${u.name} <span style="color: #94a3b8; font-weight: 400;">(@${u.login})</span>${onlineBadge}</strong>
                                 <span>${u.city} • ${u.friendsCount} друзів • ID: ${u.id}</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -1634,7 +1663,7 @@
             const friends = await res.json();
             let msg = `👥 Друзі користувача ${userName}:\n\n`;
             if (friends.length === 0) msg += 'Список порожній';
-            else friends.forEach((f, i) => { msg += `${i + 1}. ${f.name} (@${f.login})\n`; });
+            else friends.forEach((f, i) => { msg += `${i + 1}. ${f.name} (@${f.login}) ${isUserOnline(f) ? '🟢' : '⚫'}\n`; });
             alert(msg);
         }
 
@@ -1709,7 +1738,7 @@
                             </button>
                         </div>
                         <div class="admin-input-group" style="display: flex; gap: 6px; align-items: center;">
-                            <input type="number" id="boost-likes-${p.id}" placeholder="Лайків" value="100" style="width: 90px;">
+                            <input type="number" id="boost-likes-${p.id}" placeholder="Лайків" value="${state.values['boost-likes-' + p.id] || '100'}" style="width: 90px;">
                             <button onclick="adminBoostLikes(${p.id}, 1)" class="admin-btn boost" style="padding: 6px 10px; font-size: 0.78rem;">
                                 <i class="fa-solid fa-plus"></i> Додати
                             </button>
@@ -1829,6 +1858,7 @@
                     <div class="admin-stat-card"><i class="fa-solid fa-ban" style="color: #ff0055;"></i><span class="value">${s.bannedUsers}</span><span class="label">Забанено</span></div>
                     <div class="admin-stat-card"><i class="fa-solid fa-code" style="color: #00f2fe;"></i><span class="value">${s.devUsers}</span><span class="label">Розробників</span></div>
                     <div class="admin-stat-card"><i class="fa-solid fa-fire" style="color: #ffb800;"></i><span class="value">${s.activeToday}</span><span class="label">Активних 24г</span></div>
+                    <div class="admin-stat-card"><i class="fa-solid fa-circle" style="color: #00ff88;"></i><span class="value">${s.onlineUsers || 0}</span><span class="label">Онлайн зараз</span></div>
                 `;
 
                 const topEl = document.getElementById('admin-top-users');
@@ -1964,6 +1994,11 @@
             avatarEl2.className = `user-avatar-icon ${currentUser.avatarType}`;
             avatarEl1.innerHTML = getAvatarIcon(currentUser.avatarType);
             avatarEl2.innerHTML = getAvatarIcon(currentUser.avatarType);
+            // ══════ ONLINE: свій статус завжди онлайн коли є heartbeat ══════
+            const ownDot = document.getElementById('profile-online-dot');
+            const headDot = document.getElementById('header-online-dot');
+            if (ownDot) { ownDot.className = 'online-dot online'; ownDot.style.width = '22px'; ownDot.style.height = '22px'; }
+            if (headDot) { headDot.className = 'online-dot small online'; }
             const adminNavItem = document.getElementById('admin-nav-item');
             if (currentUser.role === 'Developer') {
                 adminNavItem.style.display = 'block';
