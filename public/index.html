@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ВМережі // Українська Соціальна Мережа</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        (function() {
+            var theme = localStorage.getItem('vmereshi_theme') || 'classic';
+            document.addEventListener('DOMContentLoaded', function() {
+                document.body.classList.add('theme-' + theme);
+            });
+        })();
+        (function() {
+            document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; });
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'F12' || e.keyCode === 123) { e.preventDefault(); e.stopPropagation(); return false; }
+                if (e.ctrlKey && e.shiftKey && ['I','i','J','j','C','c'].includes(e.key)) { e.preventDefault(); e.stopPropagation(); return false; }
+                if (e.ctrlKey && (e.key === 'U' || e.key === 'u')) { e.preventDefault(); e.stopPropagation(); return false; }
+                if (e.ctrlKey && (e.key === 'S' || e.key === 's')) { e.preventDefault(); e.stopPropagation(); return false; }
+                if (e.metaKey && e.altKey && ['I','i'].includes(e.key)) { e.preventDefault(); return false; }
+                if (e.metaKey && e.altKey && ['U','u'].includes(e.key)) { e.preventDefault(); return false; }
+            }, true);
+            let devtoolsOpen = false;
+            const showWarning = () => {
+                if (devtoolsOpen) return;
+                devtoolsOpen = true;
+                document.documentElement.innerHTML = '<head><title>Доступ заборонено</title></head><body style="margin:0;background:#080c14;color:#ff0055;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;"><div><div style="font-size:4rem;">🛑</div><h1 style="margin:20px 0;">Закрийте консоль розробника</h1><p style="color:#94a3b8;max-width:500px;padding:0 20px;">Виявлено відкриті інструменти розробника. Будь ласка, закрийте їх та перезавантажте сторінку.</p><button onclick="location.reload()" style="margin-top:20px;padding:12px 24px;background:#00f2fe;color:#000;border:none;border-radius:10px;font-weight:700;cursor:pointer;">Перезавантажити</button></div></body>';
+            };
+            const checkSize = () => {
+                const threshold = 160;
+                if ((window.outerWidth - window.innerWidth > threshold) || (window.outerHeight - window.innerHeight > threshold)) showWarning();
+            };
+            const checkConsole = () => {
+                const el = new Image();
+                Object.defineProperty(el, 'id', { get: function() { showWarning(); } });
+                console.log('%c', el);
+            };
+            setInterval(() => { checkSize(); checkConsole(); }, 1000);
+            document.addEventListener('dragstart', function(e) { if (e.target.tagName === 'IMG') e.preventDefault(); });
+        })();
+    </script>
+</head>
+<body>
+
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div id="victoria-trigger" class="victoria-float-btn" onclick="toggleVictoriaChat()">
+        <i class="fa-solid fa-robot"></i>
+        <span class="victoria-tooltip">Вікторія (AI)</span>
+    </div>
+
+    <div id="victoria-chat-modal" class="victoria-chat-container" style="display: none;">
+        <div class="victoria-chat-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-robot" style="color: #00f2fe;"></i>
+                <span>Вікторія // AI Асистент</span>
+            </div>
+            <button onclick="toggleVictoriaChat()" style="background:none; border:none; color:#fff; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="victoria-messages" class="victoria-chat-messages">
+            <div class="victoria-msg ai">Привіт! Я Вікторія, твій штучний інтелект на базі Llama 3. Чим можу допомогти?</div>
+        </div>
+        <div class="victoria-chat-input-area">
+            <input type="text" id="victoria-input" placeholder="Напишіть запитання..." onkeydown="if(event.key==='Enter') sendVictoriaMessage()">
+            <button onclick="sendVictoriaMessage()" class="btn-glow" style="padding: 8px 12px;"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal-overlay" style="display: none;">
+        <div class="glass-card" style="width: 100%; max-width: 620px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 15px;">
+                <h2><i class="fa-solid fa-palette" style="color: #00f2fe;"></i> Налаштування</h2>
+                <button onclick="closeSettings()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <h3 style="font-size: 0.95rem; color: #00f2fe; margin-bottom: 5px;"><i class="fa-solid fa-brush"></i> Оберіть тему оформлення</h3>
+            <p style="color: #94a3b8; font-size: 0.85rem;">Тема збережеться у вашому браузері та застосується автоматично.</p>
+            <div class="theme-grid">
+                <div class="theme-option" data-theme="classic" onclick="setTheme('classic')">
+                    <div class="theme-preview theme-preview-classic"><i class="fa-solid fa-moon"></i></div>
+                    <div class="theme-name">Класична</div>
+                    <div class="theme-desc">Темна з блакитним</div>
+                </div>
+                <div class="theme-option" data-theme="light" onclick="setTheme('light')">
+                    <div class="theme-preview theme-preview-light"><i class="fa-solid fa-sun"></i></div>
+                    <div class="theme-name">Світла</div>
+                    <div class="theme-desc">Біла з синім</div>
+                </div>
+                <div class="theme-option" data-theme="retro" onclick="setTheme('retro')">
+                    <div class="theme-preview theme-preview-retro"><i class="fa-solid fa-dragon"></i></div>
+                    <div class="theme-name">Ретро</div>
+                    <div class="theme-desc">Неон з рожевим</div>
+                </div>
+            </div>
+            <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px; margin-top: 20px; text-align: right;">
+                <button onclick="closeSettings()" class="btn-glow" style="background:#334155; color:#fff; padding: 8px 20px;">Закрити</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ban-modal" class="modal-overlay" style="display: none; z-index: 9999;">
+        <div class="glass-card auth-card" style="max-width: 480px; text-align: left; position: relative; border: 1px solid #ff0055;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,0,85,0.3); padding-bottom: 12px; margin-bottom: 15px;">
+                <h2 style="color: #ff0055; margin: 0; font-size: 1.2rem;"><i class="fa-solid fa-ban"></i> Акаунт заблоковано</h2>
+                <button onclick="logout()" style="background: rgba(255,0,85,0.2); border: 1px solid #ff0055; color: #fff; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-right-from-bracket"></i> Вийти
+                </button>
+            </div>
+            <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 15px;">Ваш акаунт було заблоковано адміністрацією за порушення правил мережі.</p>
+            <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 15px;">
+                <div style="font-size: 0.8rem; color: #ff0055; font-weight: 600; text-transform: uppercase;">Причина блокування:</div>
+                <div id="ban-modal-reason" style="color: #fff; font-size: 1rem; margin-top: 4px;">...</div>
+            </div>
+            <div style="background: rgba(0,0,0,0.4); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px;">
+                <div style="font-size: 0.8rem; color: #00f2fe; font-weight: 600; text-transform: uppercase;">Термін:</div>
+                <div id="ban-modal-time" style="color: #fff; font-size: 1rem; margin-top: 4px;">...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-modal" class="modal-overlay" style="display: none;">
+        <div class="glass-card" style="width: 100%; max-width: 650px; text-align: left; max-height: 90vh; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 15px;">
+                <h2><i class="fa-solid fa-shield-halved" style="color: #00f2fe;"></i> Панель Розробника</h2>
+                <button onclick="closeAdminModal()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div style="overflow-y: auto; display: flex; flex-direction: column; gap: 20px; padding-right: 5px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <label style="font-size:0.85rem; color:#00f2fe; display:block; margin-bottom:8px;">Накрутка друзів:</label>
+                        <div style="display:flex; gap:8px;">
+                            <input type="number" id="admin-boost-amount" value="100" style="width:80px; padding:8px; background:#000; border:1px solid #333; color:#fff; border-radius:8px; outline:none;">
+                            <button onclick="adminBoostFriends()" class="btn-glow" style="padding:8px 12px; font-size:0.85rem; flex-grow:1;">Додати</button>
+                        </div>
+                    </div>
+                    <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <label style="font-size:0.85rem; color:#ff0055; display:block; margin-bottom:8px;">Очищення стрічки:</label>
+                        <button onclick="adminClearPosts()" class="btn-glow" style="background:#ff0055; color:#fff; width:100%; padding:8px; font-size:0.85rem;">Видалити всі пости</button>
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size:0.9rem; color:#00f2fe; display:block; margin-bottom:10px;"><i class="fa-solid fa-users-gear"></i> Керування користувачами:</label>
+                    <div id="admin-users-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto;"></div>
+                </div>
+            </div>
+            <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px; margin-top: 15px; text-align: right;">
+                <button onclick="closeAdminModal()" class="btn-glow" style="background:#334155; color:#fff; padding: 8px 20px;">Закрити</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="auth-modal" class="modal-overlay">
+        <div class="glass-card auth-card">
+            <h2><i class="fa-solid fa-bolt" style="color: #00f2fe;"></i> ВМережі</h2>
+            <div class="auth-tabs">
+                <button id="tab-login-btn" class="active" onclick="switchAuthTab('login')">Вхід</button>
+                <button id="tab-reg-btn" onclick="switchAuthTab('reg')">Реєстрація</button>
+            </div>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <input type="text" id="login-input" placeholder="Логін..." required>
+                <input type="password" id="login-pass-input" placeholder="Пароль..." required>
+                <button type="submit" class="btn-glow" style="width: 100%; margin-top: 15px;">Увійти</button>
+            </form>
+            <form id="reg-form" style="display: none;" onsubmit="handleRegister(event)">
+                <input type="text" id="reg-login-input" placeholder="Логін..." required>
+                <input type="password" id="reg-pass-input" placeholder="Пароль..." required>
+                <input type="text" id="reg-name-input" placeholder="Ім'я та прізвище..." required>
+                <select id="reg-city-select" class="city-select" required></select>
+                <button type="submit" class="btn-glow" style="width: 100%; margin-top: 15px;">Зареєструватися</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="modal-overlay" style="display: none;">
+        <div class="glass-card auth-card">
+            <h2>Редагувати профіль</h2>
+            <p>Змініть свій статус або місто:</p>
+            <input type="text" id="edit-status-input" placeholder="Ваш новий статус...">
+            <select id="edit-city-select" class="city-select"></select>
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button id="save-edit-btn" class="btn-glow" style="flex: 1;">Зберегти</button>
+                <button id="close-edit-btn" class="btn-glow" style="flex: 1; background: #334155; color: #fff;">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="top-header">
+        <div class="header-container">
+            <div class="logo">
+                <i class="fa-solid fa-bolt logo-icon"></i> 
+                <span>ВМережі</span>
+            </div>
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="Пошук...">
+            </div>
+            <div class="user-mini">
+                <span id="header-name">Гість</span>
+                <div class="avatar-wrapper">
+                    <div id="header-avatar" class="user-avatar-icon dev"></div>
+                    <span class="online-badge"></span>
+                </div>
+                <button class="settings-btn" onclick="openSettings()" title="Налаштування"><i class="fa-solid fa-gear"></i></button>
+                <button onclick="logout()" style="background:none; border:none; color:#ff0055; cursor:pointer; font-size:1.1rem; margin-left:6px;" title="Вийти"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <nav class="sidebar">
+            <ul>
+                <li class="nav-item active" data-target="tab-profile" id="nav-profile">
+                    <a href="javascript:void(0)"><i class="fa-solid fa-user-astronaut"></i> <span>Моя сторінка</span></a>
+                </li>
+                <li class="nav-item" data-target="tab-news" id="nav-news">
+                    <a href="javascript:void(0)"><i class="fa-solid fa-fire"></i> <span>Стрічка новин</span></a>
+                </li>
+                <li class="nav-item" data-target="tab-friends" id="nav-friends">
+                    <a href="javascript:void(0)"><i class="fa-solid fa-users"></i> <span>Друзі та чати</span> <span id="requests-badge" class="badge" style="display:none;">0</span></a>
+                </li>
+                <li class="nav-item" data-target="tab-messages-empty" id="nav-messages">
+                    <a href="javascript:void(0)"><i class="fa-solid fa-bell"></i> <span>Повідомлення</span> <span id="notifs-badge" class="badge" style="display:none;">0</span></a>
+                </li>
+                <li class="nav-item" data-target="tab-music" id="nav-music">
+                    <a href="javascript:void(0)"><i class="fa-solid fa-compact-disc"></i> <span>VM Music</span></a>
+                </li>
+                <li class="nav-item" id="admin-nav-item" style="display: none; margin-top: 15px;">
+                    <a href="javascript:void(0)" onclick="openAdminPanel()" style="color: #00f2fe; border: 1px dashed #00f2fe;">
+                        <i class="fa-solid fa-shield-halved"></i> <span>Панель розробника</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <main class="content-area">
+            <section id="tab-profile" class="tab-content active">
+                <div class="glass-card profile-card">
+                    <div class="profile-avatar-container">
+                        <div id="profile-avatar" class="user-avatar-icon big dev"></div>
+                        <button id="open-edit-btn" class="btn-glow">Редагувати</button>
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="profile-name">Завантаження...</h2>
+                        <p class="status-text" id="profile-status">...</p>
+                        <div class="info-badges">
+                            <span class="badge-item"><i class="fa-solid fa-location-dot"></i> <span id="profile-city">...</span></span>
+                            <span class="badge-item" id="role-badge"><i class="fa-solid fa-code"></i> <span id="profile-role">User</span></span>
+                        </div>
+                        <div class="stats-row">
+                            <div class="stat-item"><strong id="friends-count">0</strong><span>друзів</span></div>
+                            <div class="stat-item"><strong>0</strong><span>підписників</span></div>
+                            <div class="stat-item"><strong>0</strong><span>фото</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card create-post-card">
+                    <textarea id="post-input" placeholder="Що у вас нового?"></textarea>
+                    <div id="attachment-preview" style="display:none; margin-top:10px; position:relative;">
+                        <div id="preview-content"></div>
+                        <button onclick="removeAttachment()" style="position:absolute; top:5px; right:5px; background:rgba(0,0,0,0.7); color:#fff; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer;">&times;</button>
+                    </div>
+                    <div class="post-actions">
+                        <div class="attach-icons">
+                            <i class="fa-solid fa-image" title="Прикріпити фото" onclick="triggerFileSelect('image')"></i>
+                            <i class="fa-solid fa-paperclip" title="Прикріпити файл" onclick="triggerFileSelect('file')"></i>
+                            <i class="fa-solid fa-music" title="Прикріпити трек" onclick="toggleMusicSelect()"></i>
+                        </div>
+                        <button id="publish-btn" class="btn-glow">Опублікувати</button>
+                    </div>
+                    <input type="file" id="image-upload" accept="image/*" style="display:none;" onchange="handleFileAttach(event, 'image')">
+                    <input type="file" id="file-upload" style="display:none;" onchange="handleFileAttach(event, 'file')">
+                    <select id="music-select" style="display:none; width:100%; margin-top:10px; padding:8px; background:#111; color:#fff; border:1px solid #333; border-radius:8px;" onchange="handleMusicAttach(event)">
+                        <option value="">-- Оберіть трек з VM Music --</option>
+                    </select>
+                </div>
+                <div id="posts-container"></div>
+            </section>
+
+            <section id="tab-news" class="tab-content">
+                <div class="glass-card" style="margin-bottom: 20px;">
+                    <h2><i class="fa-solid fa-fire" style="color:#00f2fe;"></i> Головні новини (Популярні від 10 ❤️)</h2>
+                    <p style="margin-top: 5px; color: #a0aec0; font-size:0.9rem;">Тут з'являються тільки найпопулярніші пости спільноти.</p>
+                </div>
+                <div id="news-posts-container"></div>
+            </section>
+
+            <section id="tab-friends" class="tab-content">
+                <div class="glass-card" style="margin-bottom: 20px;">
+                    <h2><i class="fa-solid fa-magnifying-glass"></i> Пошук людей</h2>
+                    <div style="display: flex; gap: 10px; margin-top: 12px;">
+                        <input type="text" id="user-search-input" placeholder="Введіть ім'я, прізвище або логін..." style="flex-grow:1; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:10px; color:#fff; outline:none;">
+                        <button onclick="searchUsers()" class="btn-glow">Знайти</button>
+                    </div>
+                    <div id="search-results-container" style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;"></div>
+                </div>
+
+                <div class="glass-card" style="margin-bottom: 20px; display: none;" id="friend-requests-card">
+                    <h2><i class="fa-solid fa-bell" style="color:#00f2fe;"></i> Вхідні заявки в друзі <span id="requests-counter" style="background:#ff0055; padding:2px 8px; border-radius:10px; font-size:0.8rem;">0</span></h2>
+                    <div id="friend-requests-list" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
+                </div>
+
+                <div class="glass-card" style="margin-bottom: 20px;">
+                    <h2><i class="fa-solid fa-users"></i> Мої Друзі</h2>
+                    <div id="friends-list" class="friends-grid" style="display:flex; flex-direction:column; gap:10px; margin-top:12px;">
+                        <p style="color:#64748b;">Список друзів порожній.</p>
+                    </div>
+                </div>
+
+                <div class="glass-card" id="messenger-section" style="display:flex; flex-direction:column; height: 65vh; max-height: 600px;">
+                    <h2><i class="fa-solid fa-comments" style="color: #00f2fe;"></i> Мессенджер</h2>
+                    <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 15px;">Оберіть друга зі списку зліва, щоб розпочати діалог.</p>
+                    <div style="display:flex; gap:15px; flex-grow:1; overflow:hidden;">
+                        <div id="messenger-chats-list" style="width: 280px; border-right: 1px solid rgba(255,255,255,0.08); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 10px;">
+                            <p style="color:#64748b; font-size:0.85rem;">Немає друзів для спілкування.</p>
+                        </div>
+                        <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:space-between;" id="messenger-active-box">
+                            <div id="messenger-placeholder" style="margin:auto; text-align:center; color:#64748b;">
+                                <i class="fa-solid fa-comment-dots" style="font-size: 2.5rem; margin-bottom: 10px; color: rgba(255,255,255,0.1);"></i>
+                                <p>Оберіть діалог, щоб переглянути повідомлення</p>
+                            </div>
+                            <div id="messenger-chat-area" style="display:none; flex-direction:column; height:100%;">
+                                <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 10px; margin-bottom: 10px;">
+                                    <div id="messenger-target-avatar" class="user-avatar-icon" style="width:36px; height:36px; font-size:0.8rem;"></div>
+                                    <div>
+                                        <h3 id="messenger-target-name" style="font-size: 0.95rem; color: #00f2fe; margin:0;">...</h3>
+                                        <span style="font-size: 0.7rem; color: #00f2fe;"><i class="fa-solid fa-comments"></i> Приватний діалог</span>
+                                    </div>
+                                </div>
+                                <div id="messenger-messages-container" style="overflow-y: auto; flex-grow: 1; padding: 5px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;"></div>
+                                <div style="display: flex; gap: 8px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
+                                    <input type="text" id="messenger-input" placeholder="Напишіть повідомлення..." style="flex-grow: 1; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; padding: 9px; outline: none; font-size: 0.85rem;" onkeydown="if(event.key==='Enter') sendMessengerMessage()">
+                                    <button onclick="sendMessengerMessage()" class="btn-glow" style="padding: 9px 14px;"><i class="fa-solid fa-paper-plane"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-user-view" class="tab-content">
+                <div style="margin-bottom: 15px;">
+                    <button onclick="goBackFromUserView()" class="btn-glow" style="background: rgba(255,255,255,0.08); color: #fff; padding: 10px 16px;">
+                        <i class="fa-solid fa-arrow-left"></i> Назад
+                    </button>
+                </div>
+                <div class="glass-card profile-card" style="margin-bottom: 20px;">
+                    <div class="profile-avatar-container">
+                        <div id="view-user-avatar" class="user-avatar-icon big"></div>
+                    </div>
+                    <div class="profile-info" style="flex-grow: 1;">
+                        <h2 id="view-user-name">...</h2>
+                        <p class="status-text" id="view-user-status">...</p>
+                        <div class="info-badges">
+                            <span class="badge-item"><i class="fa-solid fa-location-dot"></i> <span id="view-user-city">...</span></span>
+                            <span class="badge-item" id="view-user-role-badge"><i class="fa-solid fa-code"></i> <span id="view-user-role">User</span></span>
+                        </div>
+                        <div class="stats-row">
+                            <div class="stat-item"><strong id="view-user-friends-count">0</strong><span>друзів</span></div>
+                            <div class="stat-item"><strong id="view-user-posts-count">0</strong><span>публікацій</span></div>
+                            <div class="stat-item"><strong>@<span id="view-user-login">...</span></strong><span>логін</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card" style="margin-bottom: 20px; padding: 16px 20px;">
+                    <div id="view-user-actions" style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;"></div>
+                </div>
+                <div class="glass-card" style="margin-bottom: 15px;">
+                    <h2 style="font-size: 1.1rem; color: #00f2fe;"><i class="fa-solid fa-newspaper"></i> Публікації користувача</h2>
+                </div>
+                <div id="view-user-posts" style="display: flex; flex-direction: column; gap: 15px;">
+                    <p style="color:#64748b; text-align:center; padding: 20px;">Завантаження...</p>
+                </div>
+            </section>
+
+            <section id="tab-messages-empty" class="tab-content">
+                <div class="glass-card" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h2><i class="fa-solid fa-bell" style="color: #00f2fe;"></i> Центр Повідомлень</h2>
+                        <p style="color: #94a3b8; font-size: 0.85rem; margin-top: 4px;">Тут з'являються сповіщення про лайки та системні події.</p>
+                    </div>
+                    <button onclick="clearAllNotifications()" style="background: rgba(255,0,85,0.15); border: 1px solid #ff0055; color: #ff6b9d; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">
+                        <i class="fa-solid fa-trash"></i> Очистити
+                    </button>
+                </div>
+                <div id="notifications-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            </section>
+
+            <section id="tab-music" class="tab-content">
+                <div class="glass-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h2><i class="fa-solid fa-headphones" style="color: #00f2fe;"></i> VM Music Hub</h2>
+                        <button onclick="loadMusic()" class="btn-glow" style="padding: 6px 12px; font-size: 0.85rem;"><i class="fa-solid fa-rotate"></i> Оновити</button>
+                    </div>
+                    
+                    <div id="vm-music-container" class="music-list"></div>
+                </div>
+            </section>
+        </main>
+
+        <aside class="right-sidebar">
+            <div class="glass-card player-widget">
+                <h3><i class="fa-solid fa-compact-disc"></i> Плеєр ВМережі</h3>
+                <div class="now-playing">
+                    <div class="disc" id="player-disc"><i class="fa-solid fa-music"></i></div>
+                    <div class="track-details">
+                        <div id="player-title" class="title">Оберіть трек</div>
+                        <div id="player-artist" class="artist">---</div>
+                    </div>
+                </div>
+                <div class="time-slider-container">
+                    <span id="curr-time">0:00</span>
+                    <input type="range" id="seek-slider" value="0" max="100">
+                    <span id="dur-time">0:00</span>
+                </div>
+                <div class="player-controls">
+                    <button id="prev-btn" class="btn-icon"><i class="fa-solid fa-backward-step"></i></button>
+                    <button id="play-main-btn" class="btn-play-main"><i class="fa-solid fa-play"></i></button>
+                    <button id="next-btn" class="btn-icon"><i class="fa-solid fa-forward-step"></i></button>
+                </div>
+                <div class="mini-playlist" id="sidebar-music-list"></div>
+            </div>
+        </aside>
+    </div>
+
+    <audio id="audio-player"></audio>
+    <script>
+        const ukraineCities = ["Миколаїв","Київ","Харків","Одеса","Дніпро","Запоріжжя","Львів","Кривий Ріг","Вінниця","Херсон","Полтава","Чернігів","Черкаси","Житомир","Суми","Хмельницький","Чернівці","Рівне","Кам'янське","Кропивницький","Івано-Франківськ","Кременчук","Тернопіль","Луцьк","Біла Церква","Ужгород","Нікополь","Слов'янськ","Бердянськ","Алчевськ","Павлоград","Бровари","Кам'янець-Подільський","Олександрія"].sort();
+
+        let currentUser = null;
+        let currentTracks = [];
+        let currentTrackIndex = 0;
+        let isPlaying = false;
+        let currentAttachment = null;
+        let banTimerInterval = null;
+        let activeMessengerUserId = null;
+        let cachedFriends = [];
+        let cachedSentRequests = [];
+        let lastRequestsCount = 0;
+        let lastUnreadCount = 0;
+        let lastNotifsUnread = 0;
+        let notificationsOpenFlag = false;
+        let previousTabId = 'tab-news';
+        let currentViewUserId = null;
+
+        const audio = document.getElementById('audio-player');
+        const ADMIN_PASS_HASH = '0x' + '1de';
+
+        function setTheme(theme) {
+            document.body.classList.remove('theme-classic', 'theme-light', 'theme-retro');
+            document.body.classList.add('theme-' + theme);
+            localStorage.setItem('vmereshi_theme', theme);
+            updateThemeButtons(theme);
+        }
+
+        function updateThemeButtons(activeTheme) {
+            document.querySelectorAll('.theme-option').forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.theme === activeTheme);
+            });
+        }
+
+        function openSettings() {
+            const currentTheme = localStorage.getItem('vmereshi_theme') || 'classic';
+            updateThemeButtons(currentTheme);
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        function encryptMessage(text) {
+            try {
+                const layer1 = btoa(encodeURIComponent(text));
+                const layer2 = layer1.split('').reverse().map(c => String.fromCharCode(c.charCodeAt(0) + 3)).join('');
+                return "enc2:" + layer2;
+            } catch (e) { return text; }
+        }
+
+        function decryptMessage(cipher) {
+            try {
+                if (!cipher || !cipher.startsWith("enc2:")) return cipher;
+                const raw = cipher.replace("enc2:", "");
+                const layer1 = raw.split('').map(c => String.fromCharCode(c.charCodeAt(0) - 3)).reverse().join('');
+                return decodeURIComponent(atob(layer1));
+            } catch (e) { return "[Помилка дешифрування]"; }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('vmereshi_theme') || 'classic';
+            if (!document.body.classList.contains('theme-' + savedTheme)) {
+                document.body.classList.add('theme-' + savedTheme);
+            }
+            fillCitiesDropdowns();
+            checkAuth();
+            initEditProfile();
+            loadMusic();
+            loadPosts();
+            initNavigation();
+            initAudioEvents();
+
+            setInterval(() => {
+                if (currentUser) {
+                    loadUserData();
+                    updateNotificationsBadge();
+                    updateNotifsBadge();
+                    if (notificationsOpenFlag) loadNotifications(true);
+                    if (currentViewUserId) openUserProfile(currentViewUserId, true);
+                }
+                loadPosts(true);
+                if (activeMessengerUserId && document.getElementById('tab-friends').classList.contains('active')) {
+                    loadMessengerMessages(activeMessengerUserId, true);
+                }
+            }, 2000);
+
+            document.getElementById('publish-btn').addEventListener('click', createPost);
+            document.getElementById('play-main-btn').addEventListener('click', togglePlay);
+            document.getElementById('prev-btn').addEventListener('click', playPrev);
+            document.getElementById('next-btn').addEventListener('click', playNext);
+        });
+
+        function fillCitiesDropdowns() {
+            const regSelect = document.getElementById('reg-city-select');
+            const editSelect = document.getElementById('edit-city-select');
+            let options = '';
+            ukraineCities.forEach(city => { options += `<option value="${city}">${city}</option>`; });
+            regSelect.innerHTML = options;
+            editSelect.innerHTML = options;
+            regSelect.value = "Миколаїв";
+        }
+
+        function checkAuth() {
+            const savedUser = localStorage.getItem('vmereshi_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('auth-modal').style.display = 'none';
+                updateProfileUI();
+                loadUserData();
+                updateNotificationsBadge();
+                updateNotifsBadge();
+            } else {
+                document.getElementById('auth-modal').style.display = 'flex';
+            }
+        }
+
+        async function loadUserData() {
+            if (!currentUser) return;
+            try {
+                const res = await fetch(`/api/users/${currentUser.id}`);
+                const data = await res.json();
+                if (data.user) {
+                    if (data.user.isBanned) {
+                        showBanModal(data.user.banReason, data.user.banUntil);
+                        currentUser.isBanned = true;
+                        localStorage.setItem('vmereshi_user', JSON.stringify(currentUser));
+                        return;
+                    } else {
+                        if (currentUser.isBanned || document.getElementById('ban-modal').style.display === 'flex') hideBanModal();
+                    }
+                    currentUser = data.user;
+                    localStorage.setItem('vmereshi_user', JSON.stringify(currentUser));
+                    updateProfileUI();
+                    renderFriendsAndRequests(data.friendsList, data.requestsList);
+                    cachedFriends = data.friendsList || [];
+                    cachedSentRequests = data.sentRequestsList || [];
+                    renderMessengerChats(cachedFriends);
+                    lastRequestsCount = (data.requestsList || []).length;
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function updateNotificationsBadge() {
+            if (!currentUser) return;
+            try {
+                const res = await fetch(`/api/messages/unread/${currentUser.id}`);
+                const data = await res.json();
+                lastUnreadCount = data.count || 0;
+                const total = lastRequestsCount + lastUnreadCount;
+                const badge = document.getElementById('requests-badge');
+                if (total > 0) { badge.style.display = 'inline-block'; badge.innerText = total > 99 ? '99+' : total; }
+                else badge.style.display = 'none';
+            } catch (e) { console.error(e); }
+        }
+
+        async function updateNotifsBadge() {
+            if (!currentUser) return;
+            try {
+                const res = await fetch(`/api/notifications/unread/${currentUser.id}`);
+                const data = await res.json();
+                lastNotifsUnread = data.count || 0;
+                const badge = document.getElementById('notifs-badge');
+                if (lastNotifsUnread > 0 && !notificationsOpenFlag) { badge.style.display = 'inline-block'; badge.innerText = lastNotifsUnread > 99 ? '99+' : lastNotifsUnread; }
+                else badge.style.display = 'none';
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadNotifications(background = false) {
+            if (!currentUser) return;
+            try {
+                const res = await fetch(`/api/notifications/${currentUser.id}`);
+                const notifs = await res.json();
+                renderNotifications(notifs);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderNotifications(notifs) {
+            const container = document.getElementById('notifications-container');
+            if (!container) return;
+            if (!notifs || notifs.length === 0) {
+                container.innerHTML = `<div class="glass-card" style="text-align: center; padding: 50px 20px;"><i class="fa-solid fa-bell-slash" style="font-size: 3rem; color: #00f2fe; opacity: 0.4; margin-bottom: 15px;"></i><h3 style="color: #94a3b8; font-size: 1rem; font-weight: 500;">У вас поки що немає сповіщень</h3><p style="color: #64748b; font-size: 0.85rem; margin-top: 6px;">Тут з'являться лайки, заявки в друзі та інші події</p></div>`;
+                return;
+            }
+            container.innerHTML = '';
+            notifs.forEach(n => {
+                let icon = 'fa-bell', color = '#00f2fe', title = 'Сповіщення', text = '', action = '';
+                if (n.type === 'like') { icon = 'fa-heart'; color = '#ff0055'; title = `❤️ ${n.fromUserName} вподобав ваш пост`; text = `"${n.postText}"`; }
+                else if (n.type === 'popular') { icon = 'fa-trophy'; color = '#ffb800'; title = '🏆 Ваш пост у Стрічці новин!'; text = `Ваш пост набрав 10+ лайків: "${n.postText}"`; }
+                else if (n.type === 'friend_request') { icon = 'fa-user-plus'; color = '#00f2fe'; title = `👤 ${n.fromUserName} хоче додати вас у друзі`; text = `@${n.fromUserLogin} надіслав заявку.`; action = `<button onclick="event.stopPropagation(); document.getElementById('nav-friends').click();" class="btn-glow" style="padding:6px 12px; font-size:0.8rem; margin-top:8px;">До заявок</button>`; }
+                else if (n.type === 'friend_accept') { icon = 'fa-user-check'; color = '#00ff88'; title = `✅ ${n.fromUserName} прийняв вашу заявку`; text = 'Тепер ви можете спілкуватися!'; action = `<button onclick="event.stopPropagation(); switchToMessagesAndOpen(${n.fromUserId}, '${n.fromUserName}', '${n.fromUserAvatar || 'user'}');" class="btn-glow" style="padding:6px 12px; font-size:0.8rem; margin-top:8px;">Написати</button>`; }
+                else if (n.type === 'friend_removed') { icon = 'fa-user-minus'; color = '#ff0055'; title = `💔 ${n.fromUserName} видалив вас з друзів`; text = 'Ви більше не друзі.'; }
+                else if (n.type === 'ban') { icon = 'fa-ban'; color = '#ff0055'; title = '🔴 Ваш акаунт заблоковано'; text = n.text || 'Порушення правил спільноти'; }
+                else if (n.type === 'unban') { icon = 'fa-unlock'; color = '#00ff88'; title = '🟢 Ваш акаунт розблоковано'; text = 'Ласкаво просимо назад!'; }
+                else if (n.type === 'system') { icon = 'fa-bullhorn'; color = '#9d00ff'; title = n.title || '📢 Системне повідомлення'; text = n.text || ''; }
+
+                const notifDate = new Date(n.date);
+                const now = new Date();
+                const diffMin = Math.floor((now - notifDate) / 60000);
+                const diffHours = Math.floor(diffMin / 60);
+                const diffDays = Math.floor(diffHours / 24);
+                let timeStr;
+                if (diffMin < 1) timeStr = 'щойно';
+                else if (diffMin < 60) timeStr = `${diffMin} хв тому`;
+                else if (diffHours < 24) timeStr = `${diffHours} год тому`;
+                else if (diffDays < 7) timeStr = `${diffDays} дн тому`;
+                else timeStr = notifDate.toLocaleDateString('uk-UA');
+
+                const unreadDot = n.read ? '' : '<span style="width: 8px; height: 8px; border-radius: 50%; background: #00f2fe; box-shadow: 0 0 8px #00f2fe; flex-shrink: 0;"></span>';
+
+                container.innerHTML += `<div class="glass-card" onclick="openNotification(${n.id})" style="display: flex; gap: 14px; align-items: flex-start; padding: 14px 18px; position: relative; cursor: pointer; transition: 0.2s; ${n.read ? 'opacity: 0.7;' : 'border-left: 3px solid ' + color + ';'}" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='translateX(0)'"><div style="width: 42px; height: 42px; border-radius: 50%; background: ${color}20; border: 1px solid ${color}50; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><i class="fa-solid ${icon}" style="color: ${color}; font-size: 1rem;"></i></div><div style="flex-grow: 1; pointer-events: none;"><div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;"><div style="font-weight: 600; color: #fff; font-size: 0.92rem;">${title}</div>${unreadDot}</div><div style="color: #94a3b8; font-size: 0.82rem; line-height: 1.4;">${text}</div><div style="color: #64748b; font-size: 0.72rem; margin-top: 6px;"><i class="fa-regular fa-clock"></i> ${timeStr}</div></div><div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end; pointer-events:auto;">${action}<button onclick="event.stopPropagation(); deleteNotification(${n.id})" title="Видалити" style="background: none; border: none; color: #64748b; cursor: pointer; font-size: 0.85rem; padding: 4px;"><i class="fa-solid fa-xmark"></i></button></div></div>`;
+            });
+        }
+
+        async function openNotification(id) {
+            try {
+                await fetch(`/api/notifications/read/${id}`, { method: 'POST' });
+                loadNotifications();
+                updateNotifsBadge();
+            } catch (e) { console.error(e); }
+        }
+
+        async function markAllNotificationsRead() {
+            if (!currentUser) return;
+            try {
+                await fetch('/api/notifications/read-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser.id })
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function deleteNotification(id) {
+            await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
+            loadNotifications();
+            updateNotifsBadge();
+        }
+
+        async function clearAllNotifications() {
+            if (!currentUser) return;
+            if (!confirm('Видалити всі сповіщення?')) return;
+            await fetch(`/api/notifications/clear/${currentUser.id}`, { method: 'DELETE' });
+            loadNotifications();
+            updateNotifsBadge();
+        }
+
+        function showBanModal(reason, banUntil) {
+            document.getElementById('auth-modal').style.display = 'none';
+            document.getElementById('admin-modal').style.display = 'none';
+            document.getElementById('ban-modal').style.display = 'flex';
+            document.getElementById('ban-modal-reason').innerText = reason || "Порушення правил спільноти";
+            if (banTimerInterval) clearInterval(banTimerInterval);
+            if (!banUntil) {
+                document.getElementById('ban-modal-time').innerText = "Назавжди (безтерміново)";
+            } else {
+                const updateTimer = () => {
+                    const now = Date.now();
+                    const diff = banUntil - now;
+                    if (diff <= 0) { clearInterval(banTimerInterval); hideBanModal(); loadUserData(); }
+                    else { const m = Math.floor(diff / 1000 / 60); const s = Math.floor((diff / 1000) % 60); document.getElementById('ban-modal-time').innerText = `Залишилося: ${m} хв. ${s} сек.`; }
+                };
+                updateTimer();
+                banTimerInterval = setInterval(updateTimer, 1000);
+            }
+        }
+
+        function hideBanModal() {
+            document.getElementById('ban-modal').style.display = 'none';
+            if (banTimerInterval) clearInterval(banTimerInterval);
+            if (currentUser) { currentUser.isBanned = false; localStorage.setItem('vmereshi_user', JSON.stringify(currentUser)); }
+        }
+
+        function renderMessengerChats(friends) {
+            const listEl = document.getElementById('messenger-chats-list');
+            if (!listEl) return;
+            if (!friends || friends.length === 0) { listEl.innerHTML = `<p style="color:#64748b; font-size:0.85rem;">Немає друзів для спілкування.</p>`; return; }
+            listEl.innerHTML = '';
+            friends.forEach(f => {
+                const isActive = activeMessengerUserId === f.id;
+                listEl.innerHTML += `<div onclick="selectMessengerChat(${f.id}, '${f.name}', '${f.avatarType}')" style="display:flex; align-items:center; gap:10px; background:${isActive ? 'rgba(0,242,254,0.15)' : 'rgba(0,0,0,0.3)'}; border:1px solid ${isActive ? 'rgba(0,242,254,0.3)' : 'rgba(255,255,255,0.05)'}; padding:10px; border-radius:10px; cursor:pointer;"><div class="user-avatar-icon ${f.avatarType}" style="width:36px; height:36px; font-size:0.85rem;">${getAvatarIcon(f.avatarType)}</div><div style="overflow:hidden;"><div style="font-weight:600; font-size:0.9rem; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${f.name}</div><div style="font-size:0.7rem; color:#00f2fe;">@${f.login}</div></div></div>`;
+            });
+        }
+
+        function selectMessengerChat(userId, userName, avatarType) {
+            activeMessengerUserId = userId;
+            renderMessengerChats(cachedFriends);
+            document.getElementById('messenger-placeholder').style.display = 'none';
+            document.getElementById('messenger-chat-area').style.display = 'flex';
+            document.getElementById('messenger-target-name').innerText = userName;
+            const avatarEl = document.getElementById('messenger-target-avatar');
+            avatarEl.className = `user-avatar-icon ${avatarType}`;
+            avatarEl.innerHTML = getAvatarIcon(avatarType);
+            loadMessengerMessages(userId);
+        }
+
+        async function loadMessengerMessages(userId, background = false) {
+            if (!activeMessengerUserId || activeMessengerUserId !== userId) return;
+            const res = await fetch(`/api/messages?user1=${currentUser.id}&user2=${userId}`);
+            const messages = await res.json();
+            const container = document.getElementById('messenger-messages-container');
+            let html = '';
+            if (messages.length === 0) {
+                html = `<div style="color:#64748b; text-align:center; font-size:0.85rem; margin:auto;"><i class="fa-solid fa-comments"></i> Почніть діалог — напишіть перше повідомлення!</div>`;
+            } else {
+                messages.forEach(m => {
+                    const isMe = m.from === currentUser.id;
+                    const decryptedText = decryptMessage(m.text);
+                    html += `<div style="display:flex; justify-content:${isMe ? 'flex-end' : 'flex-start'};"><div style="background:${isMe ? 'rgba(0,242,254,0.15)' : 'rgba(255,255,255,0.08)'}; border:1px solid ${isMe ? 'rgba(0,242,254,0.3)' : 'rgba(255,255,255,0.05)'}; padding:8px 12px; border-radius:10px; max-width:70%; font-size:0.85rem; color:#fff;"><div>${decryptedText}</div><div style="font-size:0.65rem; color:#94a3b8; text-align:right; margin-top:2px;">${m.date}</div></div></div>`;
+                });
+            }
+            container.innerHTML = html;
+            if (!background) container.scrollTop = container.scrollHeight;
+            await markChatAsRead(userId);
+            updateNotificationsBadge();
+        }
+
+        async function markChatAsRead(otherUserId) {
+            if (!currentUser) return;
+            try {
+                await fetch('/api/messages/read', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser.id, fromUserId: otherUserId })
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function sendMessengerMessage() {
+            const input = document.getElementById('messenger-input');
+            const text = input.value.trim();
+            if (!text || !activeMessengerUserId) return;
+            const encryptedText = encryptMessage(text);
+            await fetch('/api/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ from: currentUser.id, to: activeMessengerUserId, text: encryptedText })
+            });
+            input.value = '';
+            loadMessengerMessages(activeMessengerUserId);
+        }
+
+        function switchToMessagesAndOpen(userId, userName, avatarType) {
+            document.getElementById('nav-friends').click();
+            selectMessengerChat(userId, userName, avatarType);
+            setTimeout(() => {
+                const section = document.getElementById('messenger-section');
+                if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 150);
+        }
+
+        function renderFriendsAndRequests(friends, requests) {
+            const friendsListEl = document.getElementById('friends-list');
+            const reqCard = document.getElementById('friend-requests-card');
+            const reqListEl = document.getElementById('friend-requests-list');
+            const reqCounter = document.getElementById('requests-counter');
+            if (requests && requests.length > 0) {
+                reqCard.style.display = 'block';
+                reqCounter.innerText = requests.length;
+                reqListEl.innerHTML = '';
+                requests.forEach(r => {
+                    reqListEl.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:10px;"><div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openUserProfile(${r.id})"><div class="user-avatar-icon ${r.avatarType}" style="width:36px; height:36px; font-size:0.9rem;">${getAvatarIcon(r.avatarType)}</div><div><div style="font-weight:600; font-size:0.9rem; color:#fff;">${r.name}</div><div style="font-size:0.75rem; color:#94a3b8;">@${r.login} • Нова заявка!</div></div></div><div style="display:flex; gap:6px;"><button onclick="acceptFriend(${r.id})" class="btn-glow" style="padding:6px 10px; font-size:0.8rem;">Прийняти</button><button onclick="rejectFriend(${r.id})" style="background:#334155; color:#fff; border:none; border-radius:8px; padding:6px 10px; font-size:0.8rem; cursor:pointer;">Відхилити</button></div></div>`;
+                });
+            } else reqCard.style.display = 'none';
+
+            friendsListEl.innerHTML = '';
+            if (friends.length === 0) friendsListEl.innerHTML = `<p style="color:#64748b; font-size:0.9rem;">Список друзів порожній.</p>`;
+            else {
+                friends.forEach(f => {
+                    friendsListEl.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:10px 14px; border-radius:10px;"><div style="display:flex; align-items:center; gap:12px; cursor:pointer;" onclick="openUserProfile(${f.id})"><div class="user-avatar-icon ${f.avatarType}" style="width:40px; height:40px; font-size:1rem;">${getAvatarIcon(f.avatarType)}</div><div><div style="font-weight:600; font-size:0.9rem; color:#fff;">${f.name}</div><div style="font-size:0.75rem; color:#00f2fe;">${f.city} • @${f.login}</div></div></div><div style="display:flex; gap:8px;"><button onclick="switchToMessagesAndOpen(${f.id}, '${f.name}', '${f.avatarType}')" class="btn-glow" style="padding:6px 12px; font-size:0.8rem;"><i class="fa-solid fa-comment"></i> Написати</button><button onclick="removeFriend(${f.id})" title="Видалити з друзів" style="background:#ff0055; color:#fff; border:none; border-radius:8px; padding:6px 10px; font-size:0.8rem; cursor:pointer;"><i class="fa-solid fa-user-minus"></i></button></div></div>`;
+                });
+            }
+        }
+
+        async function searchUsers() {
+            const query = document.getElementById('user-search-input').value.trim();
+            const container = document.getElementById('search-results-container');
+            if (!query) { container.innerHTML = ''; return; }
+            try {
+                const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+                const users = await res.json();
+                container.innerHTML = '';
+                const filtered = users.filter(u => u.id !== currentUser.id);
+                if (filtered.length === 0) { container.innerHTML = `<p style="color:#64748b; font-size:0.85rem;">Нікого не знайдено.</p>`; return; }
+                filtered.forEach(u => {
+                    const isAlreadyFriend = currentUser.friends && currentUser.friends.includes(u.id);
+                    const isRequestSent = cachedSentRequests.some(s => s.id === u.id);
+                    const isIncoming = u.friendRequests && u.friendRequests.includes(currentUser.id);
+                    let actionHtml;
+                    if (isAlreadyFriend) actionHtml = '<span style="color:#00ff88; font-size:0.85rem; font-weight:600;"><i class="fa-solid fa-check"></i> Друзі</span>';
+                    else if (isRequestSent) actionHtml = '<span style="color:#94a3b8; font-size:0.85rem; font-weight:600;"><i class="fa-solid fa-clock"></i> Запит надіслано</span>';
+                    else if (isIncoming) actionHtml = `<button onclick="acceptFriend(${u.id})" class="btn-glow" style="padding:6px 12px; font-size:0.8rem;">Прийняти</button>`;
+                    else actionHtml = `<button onclick="sendFriendRequest(${u.id})" class="btn-glow" style="padding:6px 12px; font-size:0.8rem;">Додати</button>`;
+                    container.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:10px;"><div style="display:flex; align-items:center; gap:10px; cursor:pointer;" onclick="openUserProfile(${u.id})"><div class="user-avatar-icon ${u.avatarType}" style="width:36px; height:36px; font-size:0.9rem;">${getAvatarIcon(u.avatarType)}</div><div><div style="font-weight:600; font-size:0.9rem; color:#fff;">${u.name}</div><div style="font-size:0.75rem; color:#94a3b8;">${u.city} • @${u.login}</div></div></div><div>${actionHtml}</div></div>`;
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function sendFriendRequest(toId) {
+            try {
+                const res = await fetch('/api/friends/request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fromUserId: currentUser.id, toUserId: toId })
+                });
+                const data = await res.json();
+                if (data.success) { alert('✅ Запит у друзі надіслано!'); await loadUserData(); searchUsers(); if (currentViewUserId === toId) openUserProfile(toId, true); }
+                else alert(data.error || 'Помилка');
+            } catch (e) { alert('Помилка з\'єднання з сервером'); }
+        }
+
+        async function acceptFriend(requesterId) {
+            const res = await fetch('/api/friends/accept', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id, requesterId })
+            });
+            const data = await res.json();
+            if (data.user) {
+                currentUser = data.user;
+                localStorage.setItem('vmereshi_user', JSON.stringify(currentUser));
+                loadUserData();
+                updateNotificationsBadge();
+                updateNotifsBadge();
+                if (currentViewUserId === requesterId) openUserProfile(requesterId, true);
+            }
+        }
+
+        async function rejectFriend(requesterId) {
+            const res = await fetch('/api/friends/reject', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id, requesterId })
+            });
+            const data = await res.json();
+            if (data.user) {
+                currentUser = data.user;
+                localStorage.setItem('vmereshi_user', JSON.stringify(currentUser));
+                loadUserData();
+                updateNotificationsBadge();
+                if (currentViewUserId === requesterId) openUserProfile(requesterId, true);
+            }
+        }
+
+        async function removeFriend(friendId) {
+            if (!confirm('Ви дійсно хочете видалити цього користувача з друзів?')) return;
+            try {
+                const res = await fetch('/api/friends/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: currentUser.id, friendId })
+                });
+                const data = await res.json();
+                if (data.user) {
+                    currentUser = data.user;
+                    localStorage.setItem('vmereshi_user', JSON.stringify(currentUser));
+                    loadUserData();
+                    updateNotificationsBadge();
+                    updateNotifsBadge();
+                    if (currentViewUserId === friendId) openUserProfile(friendId, true);
+                }
+            } catch (e) { console.error(e); alert('Помилка видалення з друзів'); }
+        }
+
+        async function openUserProfile(userId, background = false) {
+            if (userId === currentUser.id) { document.getElementById('nav-profile').click(); return; }
+            if (!background) {
+                const activeTab = document.querySelector('.tab-content.active');
+                if (activeTab && activeTab.id !== 'tab-user-view') previousTabId = activeTab.id;
+            }
+            try {
+                const res = await fetch(`/api/users/${userId}`);
+                const data = await res.json();
+                if (!data.user) return;
+                const u = data.user;
+                currentViewUserId = u.id;
+                document.getElementById('view-user-name').innerText = u.name;
+                document.getElementById('view-user-status').innerText = u.status;
+                document.getElementById('view-user-city').innerText = u.city;
+                document.getElementById('view-user-friends-count').innerText = u.friendsCount;
+                document.getElementById('view-user-posts-count').innerText = (data.posts || []).length;
+                document.getElementById('view-user-login').innerText = u.login;
+                document.getElementById('view-user-role').innerText = u.role;
+                const avatarEl = document.getElementById('view-user-avatar');
+                avatarEl.className = `user-avatar-icon big ${u.avatarType}`;
+                avatarEl.innerHTML = getAvatarIcon(u.avatarType);
+                if (u.role === 'Developer') { document.getElementById('view-user-role-badge').style.color = '#00f2fe'; document.getElementById('view-user-role-badge').style.borderColor = '#00f2fe'; }
+                else { document.getElementById('view-user-role-badge').style.color = ''; document.getElementById('view-user-role-badge').style.borderColor = ''; }
+                const actionContainer = document.getElementById('view-user-actions');
+                const isFriend = currentUser.friends && currentUser.friends.includes(u.id);
+                const isRequestSent = cachedSentRequests.some(s => s.id === u.id);
+                const hasIncoming = u.friendRequests && u.friendRequests.includes(currentUser.id);
+                if (isFriend) actionContainer.innerHTML = `<button onclick="switchToMessagesAndOpen(${u.id}, '${u.name}', '${u.avatarType}')" class="btn-glow" style="padding: 10px 18px;"><i class="fa-solid fa-comment"></i> Написати</button><span style="color:#00ff88; font-weight:600; padding: 10px 14px; display: flex; align-items: center; gap: 6px;"><i class="fa-solid fa-check"></i> Ви у друзях</span><button onclick="removeFriend(${u.id})" style="background:#ff0055; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:600; cursor:pointer;"><i class="fa-solid fa-user-minus"></i> Видалити з друзів</button>`;
+                else if (isRequestSent) actionContainer.innerHTML = `<span style="color:#94a3b8; font-weight:600; padding: 10px;"><i class="fa-solid fa-clock"></i> Запит надіслано, очікуйте підтвердження</span>`;
+                else if (hasIncoming) actionContainer.innerHTML = `<button onclick="acceptFriend(${u.id})" class="btn-glow" style="padding: 10px 18px;"><i class="fa-solid fa-check"></i> Прийняти заявку</button><button onclick="rejectFriend(${u.id})" style="background:#334155; color:#fff; border:none; border-radius:10px; padding:10px 18px; font-weight:600; cursor:pointer;"><i class="fa-solid fa-xmark"></i> Відхилити</button>`;
+                else actionContainer.innerHTML = `<button onclick="sendFriendRequest(${u.id})" class="btn-glow" style="padding: 10px 18px;"><i class="fa-solid fa-user-plus"></i> Додати в друзі</button>`;
+                const postsContainer = document.getElementById('view-user-posts');
+                postsContainer.innerHTML = '';
+                if (!data.posts || data.posts.length === 0) {
+                    postsContainer.innerHTML = `<div class="glass-card" style="text-align: center; padding: 40px 20px;"><i class="fa-solid fa-newspaper" style="font-size: 2.5rem; color: #00f2fe; opacity: 0.3; margin-bottom: 12px;"></i><p style="color:#64748b; font-size:0.9rem;">У користувача немає публікацій.</p></div>`;
+                } else {
+                    data.posts.forEach(post => {
+                        let attachmentHtml = '';
+                        if (post.attachment) {
+                            if (post.attachment.type === 'image') attachmentHtml = `<div style="margin-top:10px;"><img src="${post.attachment.data}" style="max-width:100%; border-radius:10px; max-height:400px; object-fit:cover;"></div>`;
+                            else if (post.attachment.type === 'file') attachmentHtml = `<div style="margin-top:10px;"><a href="${post.attachment.data}" download="${post.attachment.name}" style="color:#00f2fe; text-decoration:none;"><i class="fa-solid fa-file"></i> Завантажити ${post.attachment.name}</a></div>`;
+                            else if (post.attachment.type === 'audio') attachmentHtml = `<div style="margin-top:12px; background:rgba(0,0,0,0.4); padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; gap:12px;"><i class="fa-solid fa-music" style="color:#00f2fe; font-size:1.2rem;"></i><div style="flex-grow:1; font-size:0.85rem; color:#fff; font-weight:600;">${post.attachment.name}</div><audio controls src="${post.attachment.url}" style="height:32px; outline:none;"></audio></div>`;
+                        }
+                        const isLiked = post.likedBy && post.likedBy.includes(currentUser.id);
+                        postsContainer.innerHTML += `<div class="glass-card post-card" style="margin-bottom:0;"><div class="post-header"><div class="user-avatar-icon ${post.avatarType}">${getAvatarIcon(post.avatarType)}</div><div class="post-author-info"><h4>${post.author}</h4><span class="post-date">${post.date}</span></div></div><div class="post-content"><p style="white-space: pre-line;">${post.text}</p>${attachmentHtml}</div><div class="post-footer"><button class="like-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike(${post.id})"><i class="fa-${isLiked ? 'solid' : 'regular'} fa-heart"></i> <span id="likes-${post.id}">${post.likes}</span></button></div></div>`;
+                    });
+                }
+                if (!background) {
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                    document.getElementById('tab-user-view').classList.add('active');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function goBackFromUserView() {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            const backTab = previousTabId || 'tab-news';
+            const backTabEl = document.getElementById(backTab);
+            if (backTabEl) backTabEl.classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(i => { i.classList.toggle('active', i.dataset.target === backTab); });
+            currentViewUserId = null;
+        }
+
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('login-form');
+            const regForm = document.getElementById('reg-form');
+            const loginBtn = document.getElementById('tab-login-btn');
+            const regBtn = document.getElementById('tab-reg-btn');
+            if (tab === 'login') { loginForm.style.display = 'block'; regForm.style.display = 'none'; loginBtn.classList.add('active'); regBtn.classList.remove('active'); }
+            else { loginForm.style.display = 'none'; regForm.style.display = 'block'; loginBtn.classList.remove('active'); regBtn.classList.add('active'); }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const login = document.getElementById('login-input').value.trim();
+            const password = document.getElementById('login-pass-input').value.trim();
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ login, password })
+                });
+                const data = await res.json();
+                if (res.status === 403 && data.isBanned) { showBanModal(data.banReason, data.banUntil); return; }
+                if (!res.ok) return alert(data.error || "Помилка входу!");
+                currentUser = data;
+                localStorage.setItem('vmereshi_user', JSON.stringify(currentUser));
+                document.getElementById('auth-modal').style.display = 'none';
+                updateProfileUI();
+                loadPosts();
+                loadUserData();
+                updateNotificationsBadge();
+                updateNotifsBadge();
+            } catch (err) { alert("Помилка авторизації!"); }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const login = document.getElementById('reg-login-input').value.trim();
+            const password = document.getElementById('reg-pass-input').value.trim();
+            const name = document.getElementById('reg-name-input').value.trim();
+            const city = document.getElementById('reg-city-select').value;
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ login, password, name, city })
+                });
+                const data = await res.json();
+                if (!res.ok) return alert(data.error);
+                currentUser = data;
+                localStorage.setItem('vmereshi_user', JSON.stringify(currentUser));
+                document.getElementById('auth-modal').style.display = 'none';
+                updateProfileUI();
+                loadPosts();
+                loadUserData();
+                updateNotificationsBadge();
+                updateNotifsBadge();
+            } catch (err) { alert("Помилка реєстрації!"); }
+        }
+
+        function logout() {
+            localStorage.removeItem('vmereshi_user');
+            currentUser = null;
+            location.reload();
+        }
+
+        function initNavigation() {
+            const navItems = document.querySelectorAll('.sidebar .nav-item');
+            const tabs = document.querySelectorAll('.tab-content');
+            navItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const targetId = item.getAttribute('data-target');
+                    if(!targetId) return;
+                    navItems.forEach(i => i.classList.remove('active'));
+                    tabs.forEach(t => t.classList.remove('active'));
+                    item.classList.add('active');
+                    document.getElementById(targetId).classList.add('active');
+                    currentViewUserId = null;
+                    if (targetId === 'tab-messages-empty') {
+                        notificationsOpenFlag = true;
+                        loadNotifications().then(() => {
+                            setTimeout(() => {
+                                markAllNotificationsRead().then(() => {
+                                    updateNotifsBadge();
+                                    document.getElementById('notifs-badge').style.display = 'none';
+                                    loadNotifications();
+                                });
+                            }, 1500);
+                        });
+                    } else { notificationsOpenFlag = false; updateNotifsBadge(); }
+                });
+            });
+        }
+
+        function openAdminPanel() {
+            if (!currentUser || currentUser.role !== 'Developer') return alert('❌ У вас немає доступу!');
+            const pass = prompt('Введіть пароль розробника:');
+            if (pass === ADMIN_PASS_HASH) {
+                document.getElementById('admin-modal').style.display = 'flex';
+                loadAdminUsers();
+            } else alert('❌ Невірний пароль!');
+        }
+
+        function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
+
+        async function loadAdminUsers() {
+            const res = await fetch('/api/admin/users');
+            const users = await res.json();
+            const listEl = document.getElementById('admin-users-list');
+            listEl.innerHTML = '';
+            users.forEach(u => {
+                const isSelf = u.id === currentUser.id;
+                listEl.innerHTML += `<div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); padding: 12px; border-radius: 10px; display: flex; flex-direction: column; gap: 8px;"><div style="display: flex; justify-content: space-between; align-items: center;"><div><strong style="color: #fff;">${u.name}</strong> <span style="color: #94a3b8; font-size: 0.8rem;">(@${u.login})</span></div><span style="font-size: 0.8rem; color: ${u.isBanned ? '#ff0055' : '#00ff88'}; font-weight: 600;">${u.isBanned ? '🔴 Забанений' : '🟢 Активний'}</span></div>${!isSelf ? `<div style="display: flex; gap: 8px; align-items: center;"><input type="text" id="ban-reason-${u.id}" placeholder="Причина..." value="${u.banReason || ''}" style="flex-grow: 1; padding: 6px 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 6px; font-size: 0.85rem; outline: none;"><select id="ban-duration-${u.id}" style="padding: 6px; background: #000; border: 1px solid #333; color: #fff; border-radius: 6px; font-size: 0.85rem; outline: none;"><option value="0">Назавжди</option><option value="1">1 хв</option><option value="60">1 год</option><option value="1440">24 год</option><option value="10080">7 днів</option></select><button onclick="adminToggleBan(${u.id})" style="background: ${u.isBanned ? '#00ff88' : '#ff0055'}; color: ${u.isBanned ? '#000' : '#fff'}; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem;">${u.isBanned ? 'Розбанити' : 'Забанити'}</button></div>` : '<div style="font-size: 0.75rem; color: #64748b; font-style: italic;">Це ваш акаунт</div>'}</div>`;
+            });
+        }
+
+        async function adminToggleBan(id) {
+            const reasonInput = document.getElementById(`ban-reason-${id}`);
+            const durationSelect = document.getElementById(`ban-duration-${id}`);
+            const reason = reasonInput ? reasonInput.value.trim() : "";
+            const durationMinutes = durationSelect ? durationSelect.value : 0;
+            await fetch('/api/admin/ban', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: id, reason, durationMinutes })
+            });
+            loadAdminUsers();
+        }
+
+        async function adminBoostFriends() {
+            const amount = document.getElementById('admin-boost-amount').value;
+            const res = await fetch('/api/admin/boost', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id, amount })
+            });
+            const data = await res.json();
+            if (data.user) { currentUser = data.user; localStorage.setItem('vmereshi_user', JSON.stringify(currentUser)); updateProfileUI(); alert('✅ Друзів додано!'); }
+        }
+
+        async function adminClearPosts() {
+            if (confirm('Видалити всі пости?')) {
+                await fetch('/api/admin/clear-posts', { method: 'POST' });
+                loadPosts();
+                alert('✅ Видалено!');
+            }
+        }
+
+        function toggleVictoriaChat() {
+            const chat = document.getElementById('victoria-chat-modal');
+            chat.style.display = chat.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        async function sendVictoriaMessage() {
+            const input = document.getElementById('victoria-input');
+            const msgText = input.value.trim();
+            if (!msgText) return;
+            const messagesContainer = document.getElementById('victoria-messages');
+            messagesContainer.innerHTML += `<div class="victoria-msg user">${msgText}</div>`;
+            input.value = '';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            const loadingId = 'loading-' + Date.now();
+            messagesContainer.innerHTML += `<div class="victoria-msg ai" id="${loadingId}">Вікторія думає...</div>`;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            try {
+                const res = await fetch('/api/victoria/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msgText, user: currentUser ? currentUser.name : 'Гість' })
+                });
+                const data = await res.json();
+                const loadEl = document.getElementById(loadingId);
+                if(loadEl) loadEl.remove();
+                messagesContainer.innerHTML += `<div class="victoria-msg ai">${data.reply}</div>`;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } catch (err) {
+                const loadEl = document.getElementById(loadingId);
+                if(loadEl) loadEl.remove();
+                messagesContainer.innerHTML += `<div class="victoria-msg ai" style="color:#ff0055;">Помилка зв'язку</div>`;
+            }
+        }
+
+        function triggerFileSelect(type) {
+            if (type === 'image') document.getElementById('image-upload').click();
+            if (type === 'file') document.getElementById('file-upload').click();
+        }
+
+        function handleFileAttach(event, type) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentAttachment = { type: type, name: file.name, data: e.target.result };
+                const previewContainer = document.getElementById('preview-content');
+                if (type === 'image') previewContainer.innerHTML = `<img src="${e.target.result}" style="max-height:150px; border-radius:10px; display:block;">`;
+                else previewContainer.innerHTML = `<div style="color:#00f2fe; padding:8px; background:rgba(0,0,0,0.3); border-radius:8px;"><i class="fa-solid fa-file"></i> ${file.name}</div>`;
+                document.getElementById('attachment-preview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function toggleMusicSelect() {
+            const select = document.getElementById('music-select');
+            select.style.display = select.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function handleMusicAttach(event) {
+            const selectedOption = event.target.options[event.target.selectedIndex];
+            if (!event.target.value) return;
+            const fileName = event.target.value;
+            const trackName = selectedOption.text;
+            currentAttachment = { type: 'audio', name: trackName, url: `/music/${encodeURIComponent(fileName)}` };
+            const previewContainer = document.getElementById('preview-content');
+            previewContainer.innerHTML = `<div style="color:#00f2fe; padding:8px; background:rgba(0,0,0,0.3); border-radius:8px;"><i class="fa-solid fa-music"></i> ${trackName}</div>`;
+            document.getElementById('attachment-preview').style.display = 'block';
+            document.getElementById('music-select').style.display = 'none';
+        }
+
+        function removeAttachment() {
+            currentAttachment = null;
+            document.getElementById('attachment-preview').style.display = 'none';
+            document.getElementById('preview-content').innerHTML = '';
+            document.getElementById('image-upload').value = '';
+            document.getElementById('file-upload').value = '';
+            document.getElementById('music-select').value = '';
+        }
+
+        function initEditProfile() {
+            const modal = document.getElementById('edit-modal');
+            document.getElementById('open-edit-btn').addEventListener('click', () => {
+                document.getElementById('edit-status-input').value = currentUser.status || '';
+                document.getElementById('edit-city-select').value = currentUser.city || 'Миколаїв';
+                modal.style.display = 'flex';
+            });
+            document.getElementById('close-edit-btn').addEventListener('click', () => { modal.style.display = 'none'; });
+            document.getElementById('save-edit-btn').addEventListener('click', async () => {
+                const status = document.getElementById('edit-status-input').value.trim();
+                const city = document.getElementById('edit-city-select').value;
+                const res = await fetch('/api/profile/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: currentUser.id, status, city })
+                });
+                const data = await res.json();
+                if (data.user) { currentUser = data.user; localStorage.setItem('vmereshi_user', JSON.stringify(currentUser)); }
+                modal.style.display = 'none';
+                updateProfileUI();
+            });
+        }
+
+        function updateProfileUI() {
+            if (!currentUser) return;
+            document.getElementById('profile-name').innerText = currentUser.name;
+            document.getElementById('header-name').innerText = currentUser.name.split(' ')[0];
+            document.getElementById('profile-status').innerText = currentUser.status;
+            document.getElementById('profile-city').innerText = currentUser.city;
+            document.getElementById('friends-count').innerText = currentUser.friendsCount;
+            document.getElementById('profile-role').innerText = currentUser.role;
+            const avatarEl1 = document.getElementById('profile-avatar');
+            const avatarEl2 = document.getElementById('header-avatar');
+            avatarEl1.className = `user-avatar-icon big ${currentUser.avatarType}`;
+            avatarEl2.className = `user-avatar-icon ${currentUser.avatarType}`;
+            avatarEl1.innerHTML = getAvatarIcon(currentUser.avatarType);
+            avatarEl2.innerHTML = getAvatarIcon(currentUser.avatarType);
+            const adminNavItem = document.getElementById('admin-nav-item');
+            if (currentUser.role === 'Developer') {
+                adminNavItem.style.display = 'block';
+                document.getElementById('role-badge').style.color = '#00f2fe';
+                document.getElementById('role-badge').style.borderColor = '#00f2fe';
+            } else adminNavItem.style.display = 'none';
+        }
+
+        function getAvatarIcon(type) {
+            if (type === 'dev') return '<i class="fa-solid fa-code"></i>';
+            return '<i class="fa-solid fa-user"></i>';
+        }
+
+        let lastPostsJSON = "";
+
+        async function loadPosts(background = false) {
+            try {
+                const res = await fetch('/api/posts');
+                const posts = await res.json();
+                const postsJSON = JSON.stringify(posts);
+                if (background && postsJSON === lastPostsJSON) return;
+                lastPostsJSON = postsJSON;
+                const profileContainer = document.getElementById('posts-container');
+                const newsContainer = document.getElementById('news-posts-container');
+                profileContainer.innerHTML = '';
+                newsContainer.innerHTML = '';
+                if (posts.length === 0) {
+                    newsContainer.innerHTML = '<div class="glass-card" style="color:#a0aec0;">Популярних новин поки немає.</div>';
+                    profileContainer.innerHTML = '<div class="glass-card" style="color:#a0aec0;">У вас поки немає публікацій.</div>';
+                    return;
+                }
+                let hasPopularNews = false;
+                posts.forEach(post => {
+                    const postEl = document.createElement('div');
+                    postEl.className = 'glass-card post-card';
+                    const canDelete = currentUser && ((post.authorId && post.authorId === currentUser.id) || (!post.authorId && post.author === currentUser.name) || currentUser.role === 'Developer');
+                    const isLiked = post.likedBy && post.likedBy.includes(currentUser ? currentUser.id : null);
+                    let attachmentHtml = '';
+                    if (post.attachment) {
+                        if (post.attachment.type === 'image') attachmentHtml = `<div style="margin-top:10px;"><img src="${post.attachment.data}" style="max-width:100%; border-radius:10px; max-height:400px; object-fit:cover;"></div>`;
+                        else if (post.attachment.type === 'file') attachmentHtml = `<div style="margin-top:10px;"><a href="${post.attachment.data}" download="${post.attachment.name}" style="color:#00f2fe; text-decoration:none;"><i class="fa-solid fa-file"></i> Завантажити ${post.attachment.name}</a></div>`;
+                        else if (post.attachment.type === 'audio') attachmentHtml = `<div style="margin-top:12px; background:rgba(0,0,0,0.4); padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; gap:12px;"><i class="fa-solid fa-music" style="color:#00f2fe; font-size:1.2rem;"></i><div style="flex-grow:1; font-size:0.85rem; color:#fff; font-weight:600;">${post.attachment.name}</div><audio controls src="${post.attachment.url}" style="height:32px; outline:none;"></audio></div>`;
+                    }
+                    postEl.innerHTML = `<div class="post-header"><div class="user-avatar-icon ${post.avatarType}">${getAvatarIcon(post.avatarType)}</div><div class="post-author-info"><h4>${post.author}</h4><span class="post-date">${post.date}</span></div>${canDelete ? `<button class="delete-post-btn" onclick="deletePost(${post.id})"><i class="fa-solid fa-trash"></i></button>` : ''}</div><div class="post-content"><p style="white-space: pre-line;">${post.text}</p>${attachmentHtml}</div><div class="post-footer"><button class="like-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike(${post.id})"><i class="fa-${isLiked ? 'solid' : 'regular'} fa-heart"></i> <span id="likes-${post.id}">${post.likes}</span></button></div>`;
+                    const isMyPost = currentUser && ((post.authorId && post.authorId === currentUser.id) || (!post.authorId && post.author === currentUser.name));
+                    if (isMyPost) profileContainer.appendChild(postEl.cloneNode(true));
+                    if (post.likes >= 10) { newsContainer.appendChild(postEl.cloneNode(true)); hasPopularNews = true; }
+                });
+                if (!hasPopularNews) newsContainer.innerHTML = '<div class="glass-card" style="color:#a0aec0;">Поки немає новин з 10+ лайками.</div>';
+            } catch (err) { console.error("Помилка завантаження постів:", err); }
+        }
+
+        async function deletePost(id) {
+            await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+            loadPosts();
+        }
+
+        async function createPost() {
+            const input = document.getElementById('post-input');
+            const text = input.value.trim();
+            if (!text && !currentAttachment) return alert('Введіть текст або прикріпіть файл!');
+            await fetch('/api/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, author: currentUser.name, authorId: currentUser.id, avatarType: currentUser.avatarType, attachment: currentAttachment })
+            });
+            input.value = '';
+            removeAttachment();
+            loadPosts();
+        }
+
+        async function toggleLike(id) {
+            if (!currentUser) return alert("Увійдіть в акаунт!");
+            await fetch(`/api/posts/${id}/like`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUser.id })
+            });
+            loadPosts();
+            if (currentViewUserId) openUserProfile(currentViewUserId, true);
+        }
+
+        let currentTracksString = "";
+
+        async function loadMusic() {
+            try {
+                const res = await fetch('/api/music');
+                const data = await res.json();
+                const newTracksString = JSON.stringify(data);
+                if (newTracksString !== currentTracksString) {
+                    currentTracksString = newTracksString;
+                    currentTracks = data;
+                    renderMusicList(document.getElementById('sidebar-music-list'));
+                    renderMusicList(document.getElementById('vm-music-container'));
+                    const select = document.getElementById('music-select');
+                    select.innerHTML = '<option value="">-- Оберіть трек з VM Music --</option>';
+                    data.forEach(t => { select.innerHTML += `<option value="${t.fileName}">${t.artist} - ${t.title}</option>`; });
+                }
+            } catch (err) { console.error("Помилка завантаження музики:", err); }
+        }
+
+        setInterval(() => { if (!document.hidden) loadMusic(); }, 5000);
+
+        function renderMusicList(container) {
+            if (!container) return;
+            container.innerHTML = '';
+            if (currentTracks.length === 0) { container.innerHTML = `<p style="color: #64748b; padding: 10px;">Папка public/music порожня.</p>`; return; }
+            currentTracks.forEach((track, index) => {
+                const item = document.createElement('div');
+                item.className = 'track-item';
+                item.innerHTML = `<button class="play-btn" onclick="playTrack(${index})"><i class="fa-solid fa-play"></i></button><div class="track-info"><div class="track-title">${track.title}</div><div class="track-artist">${track.artist}</div></div><span class="track-dur"><i class="fa-solid fa-music"></i></span>`;
+                container.appendChild(item);
+            });
+        }
+
+        function playTrack(index) {
+            if (index < 0 || index >= currentTracks.length) return;
+            currentTrackIndex = index;
+            const track = currentTracks[index];
+            audio.src = track.url;
+            audio.play().then(() => {
+                isPlaying = true;
+                document.getElementById('player-title').innerText = track.title;
+                document.getElementById('player-artist').innerText = track.artist;
+                document.getElementById('player-disc').classList.add('spinning');
+                document.getElementById('play-main-btn').innerHTML = '<i class="fa-solid fa-pause"></i>';
+            }).catch(e => console.error(e));
+        }
+
+        function togglePlay() {
+            if (currentTracks.length === 0) return alert("Папка public/music порожня!");
+            if (!audio.src) { playTrack(0); return; }
+            if (isPlaying) {
+                audio.pause();
+                isPlaying = false;
+                document.getElementById('player-disc').classList.remove('spinning');
+                document.getElementById('play-main-btn').innerHTML = '<i class="fa-solid fa-play"></i>';
+            } else {
+                audio.play();
+                isPlaying = true;
+                document.getElementById('player-disc').classList.add('spinning');
+                document.getElementById('play-main-btn').innerHTML = '<i class="fa-solid fa-pause"></i>';
+            }
+        }
+
+        function playNext() {
+            if (currentTracks.length === 0) return;
+            let nextIndex = (currentTrackIndex + 1) % currentTracks.length;
+            playTrack(nextIndex);
+        }
+
+        function playPrev() {
+            if (currentTracks.length === 0) return;
+            let prevIndex = (currentTrackIndex - 1 + currentTracks.length) % currentTracks.length;
+            playTrack(prevIndex);
+        }
+
+        function initAudioEvents() {
+            const seekSlider = document.getElementById('seek-slider');
+            const currTime = document.getElementById('curr-time');
+            const durTime = document.getElementById('dur-time');
+            audio.addEventListener('timeupdate', () => {
+                if (audio.duration) {
+                    const pct = (audio.currentTime / audio.duration) * 100;
+                    seekSlider.value = pct;
+                    currTime.innerText = formatTime(audio.currentTime);
+                    durTime.innerText = formatTime(audio.duration);
+                }
+            });
+            seekSlider.addEventListener('input', () => { if (audio.duration) audio.currentTime = (seekSlider.value / 100) * audio.duration; });
+            audio.addEventListener('ended', playNext);
+        }
+
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60);
+            const s = Math.floor(sec % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+    </script>
+</body>
+</html>

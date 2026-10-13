@@ -1,0 +1,96 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "login": "denis",
+      "password": "Den4ik1706a4",
+      "name": "Денис Павловський",
+      "city": "Миколаїв",
+      "status": "Засновник та Розробник ВМережі ⚡",
+      "role": "Developer",
+      "avatarType": "dev",
+      "friendsCount": 1,
+      "isBanned": false,
+      "friends": [
+        1791827356280
+      ],
+      "friendRequests": []
+    },
+    {
+      "id": 1791827356280,
+      "login": "den4ik9057",
+      "password": "Den4ik1706a4",
+      "name": "Денис Павловський",
+      "city": "Миколаїв",
+      "status": "Користувач ВМережі",
+      "role": "User",
+      "avatarType": "user",
+      "friendsCount": 1,
+      "isBanned": false,
+      "friends": [
+        1
+      ],
+      "friendRequests": [],
+      "banReason": "",
+      "banUntil": null
+    }
+  ],
+  "posts": [
+    {
+      "id": 1791891594259,
+      "authorId": 1,
+      "author": "Денис Павловський",
+      "avatarType": "dev",
+      "date": "Щойно",
+      "text": "]e]",
+      "attachment": null,
+      "likes": 2,
+      "likedBy": [
+        1791827356280,
+        1
+      ],
+      "popularNotified": false
+    }
+  ],
+  "messages": [
+    {
+      "id": 1791892235488,
+      "from": 1,
+      "to": 1791827356280,
+      "text": "enc2:EMXMzTXM7LXMzTXM|jWM{TXM4LXMzTXMHMXMzTXM7LXMzTXMGMXMzTXMzLWMEMXMzTXM7LXMzTXM|jWM{TXM4LXMzTXM|LXMzTXM7LXMzTXMzjWM{TXMJMXMzTXM",
+      "date": "14:50",
+      "read": true
+    },
+    {
+      "id": 1791892251387,
+      "from": 1,
+      "to": 1791827356280,
+      "text": "enc2:FMXMzTXM4LXMzTXM}jWM{TXM4jWM{TXMzLXMzTXMzLWMIMXMzTXM|jWM{TXM{nWM{TXM6jWM{TXMzLWMFkWM{TXM|jWM{TXM",
+      "date": "14:50",
+      "read": true
+    }
+  ],
+  "notifications": [
+    {
+      "id": 1791839176444.1672,
+      "userId": 1,
+      "type": "friend_accept",
+      "date": 1791839176444,
+      "read": true,
+      "fromUserId": 1791827356280,
+      "fromUserName": "Денис Павловський",
+      "fromUserAvatar": "user"
+    },
+    {
+      "id": 1791892136181.763,
+      "userId": 1,
+      "type": "like",
+      "date": 1791892136181,
+      "read": true,
+      "fromUserId": 1791827356280,
+      "fromUserName": "Денис Павловський",
+      "postId": 1791891594259,
+      "postText": "]e]"
+    }
+  ]
+}
