@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
+const https = require('https');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -225,28 +226,64 @@ app.delete('/api/notifications/clear/:userId', (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/victoria/chat', (req, res) => {
+app.post('/api/victoria/chat', async (req, res) => {
     const { message, user } = req.body;
     if (!message) return res.status(400).json({ error: "Повідомлення порожнє" });
+
+    const GROQ_API_KEY = process.env.GROQ_API_KEY;
+
+    if (!GROQ_API_KEY) {
+        return res.json({ reply: "API ключ Groq не налаштований. Зверніться до адміністратора." });
+    }
+
     const postData = JSON.stringify({
-        model: "llama3",
-        prompt: `Ти — Вікторія, привітний та корисний AI-асистент соціальної мережі «ВМережі». Користувач: ${user}. Запитання: ${message}`,
-        stream: false
+        model: "llama-3.3-70b-versatile",
+        messages: [
+            { role: "system", content: `Ти — Вікторія, привітний та корисний AI-асистент соціальної мережі «ВМережі». Відповідай українською мовою. Користувача звати ${user}.` },
+            { role: "user", content: message }
+        ],
+        temperature: 0.7,
+        max_tokens: 1024
     });
-    const options = { hostname: '127.0.0.1', port: 11434, path: '/api/generate', method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(postData) } };
-    const reqOllama = http.request(options, (resOllama) => {
+
+    const options = {
+        hostname: 'api.groq.com',
+        port: 443,
+        path: '/openai/v1/chat/completions',
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${GROQ_API_KEY}`,
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(postData)
+        }
+    };
+
+    const reqGroq = https.request(options, (resGroq) => {
         let rawData = '';
-        resOllama.on('data', (chunk) => { rawData += chunk; });
-        resOllama.on('end', () => {
+        resGroq.on('data', (chunk) => { rawData += chunk; });
+        resGroq.on('end', () => {
             try {
                 const parsed = JSON.parse(rawData);
-                res.json({ reply: parsed.response ? parsed.response.trim() : "Не вдалося отримати відповідь." });
-            } catch (e) { res.json({ reply: "Помилка обробки відповіді." }); }
+                if (parsed.error) {
+                    console.error("Groq API Error:", parsed.error);
+                    return res.json({ reply: `Помилка від Groq: ${parsed.error.message}` });
+                }
+                const aiReply = parsed.choices[0]?.message?.content?.trim() || "Не вдалося отримати відповідь від Groq.";
+                res.json({ reply: aiReply });
+            } catch (e) {
+                console.error("Помилка парсингу відповіді від Groq:", e);
+                res.json({ reply: "Помилка обробки відповіді від Groq." });
+            }
         });
     });
-    reqOllama.on('error', () => { res.json({ reply: "Не вдалося з'єднатися з Llama 3." }); });
-    reqOllama.write(postData);
-    reqOllama.end();
+
+    reqGroq.on('error', (error) => {
+        console.error("Groq connection error:", error);
+        res.json({ reply: "Не вдалося з'єднатися з Groq." });
+    });
+
+    reqGroq.write(postData);
+    reqGroq.end();
 });
 
 app.get('/api/music', (req, res) => {
