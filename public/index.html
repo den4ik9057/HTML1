@@ -113,6 +113,12 @@
         .admin-post-item .post-stats-admin { color: #64748b; font-size: 0.7rem; margin-top: 4px; }
         .admin-empty { color: #64748b; text-align: center; padding: 30px; font-size: 0.9rem; }
 
+        /* ==== VOLUME CONTROL ==== */
+        .volume-control { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #64748b; margin-bottom: 12px; }
+        .volume-control i { cursor: pointer; width: 20px; text-align: center; transition: 0.2s; font-size: 1rem; }
+        .volume-control i:hover { color: #00f2fe; }
+        .volume-control input[type="range"] { flex-grow: 1; accent-color: #00f2fe; cursor: pointer; height: 4px; }
+
         .mobile-menu-btn {
             display: none;
             background: none;
@@ -235,9 +241,10 @@
                 padding: 12px 40px 12px 14px;
                 position: relative;
             }
-            .right-sidebar .player-widget.expanded { max-height: 70vh; overflow-y: auto; }
+            .right-sidebar .player-widget.expanded { max-height: 75vh; overflow-y: auto; }
             .right-sidebar .player-widget h3 { display: none; }
             .right-sidebar .player-widget:not(.expanded) .time-slider-container,
+            .right-sidebar .player-widget:not(.expanded) .volume-control,
             .right-sidebar .player-widget:not(.expanded) .player-controls,
             .right-sidebar .player-widget:not(.expanded) .mini-playlist { display: none; }
             .right-sidebar .player-widget:not(.expanded) .now-playing { margin-bottom: 0; cursor: pointer; }
@@ -705,10 +712,16 @@
 
             <section id="tab-music" class="tab-content">
                 <div class="glass-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
                         <h2><i class="fa-solid fa-headphones" style="color: #00f2fe;"></i> VM Music Hub</h2>
                         <button onclick="loadMusic()" class="btn-glow" style="padding: 6px 12px; font-size: 0.85rem;"><i class="fa-solid fa-rotate"></i> Оновити</button>
                     </div>
+
+                    <div class="volume-control" style="background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: 10px; margin-bottom: 15px;">
+                        <i class="fa-solid fa-volume-high" id="vol-icon-music"></i>
+                        <input type="range" id="volume-slider-music" value="100" max="100" min="0">
+                    </div>
+
                     <div id="vm-music-container" class="music-list"></div>
                 </div>
             </section>
@@ -729,6 +742,12 @@
                     <input type="range" id="seek-slider" value="0" max="100">
                     <span id="dur-time">0:00</span>
                 </div>
+
+                <div class="volume-control">
+                    <i class="fa-solid fa-volume-high" id="vol-icon-player"></i>
+                    <input type="range" id="volume-slider-player" value="100" max="100" min="0">
+                </div>
+
                 <div class="player-controls">
                     <button id="prev-btn" class="btn-icon"><i class="fa-solid fa-backward-step"></i></button>
                     <button id="play-main-btn" class="btn-play-main"><i class="fa-solid fa-play"></i></button>
@@ -2088,6 +2107,56 @@
             });
             seekSlider.addEventListener('input', () => { if (audio.duration) audio.currentTime = (seekSlider.value / 100) * audio.duration; });
             audio.addEventListener('ended', playNext);
+            initVolumeControl();
+        }
+
+        function initVolumeControl() {
+            const sliders = [
+                document.getElementById('volume-slider-player'),
+                document.getElementById('volume-slider-music')
+            ].filter(Boolean);
+
+            const icons = [
+                document.getElementById('vol-icon-player'),
+                document.getElementById('vol-icon-music')
+            ].filter(Boolean);
+
+            const savedVol = localStorage.getItem('vmereshi_volume');
+            const initialVol = savedVol !== null ? parseInt(savedVol) : 100;
+            audio.volume = initialVol / 100;
+            sliders.forEach(s => s.value = initialVol);
+            updateAllIcons(initialVol);
+
+            function updateAllIcons(v) {
+                let iconClass = 'fa-solid fa-volume-high';
+                if (v == 0) iconClass = 'fa-solid fa-volume-xmark';
+                else if (v < 50) iconClass = 'fa-solid fa-volume-low';
+                icons.forEach(i => { i.className = iconClass; });
+            }
+
+            function setVolume(v) {
+                v = Math.max(0, Math.min(100, parseInt(v)));
+                audio.volume = v / 100;
+                localStorage.setItem('vmereshi_volume', v);
+                sliders.forEach(s => s.value = v);
+                updateAllIcons(v);
+            }
+
+            sliders.forEach(slider => {
+                slider.addEventListener('input', () => setVolume(slider.value));
+            });
+
+            icons.forEach(icon => {
+                icon.addEventListener('click', () => {
+                    if (audio.volume > 0) {
+                        icon.dataset.prev = Math.round(audio.volume * 100);
+                        setVolume(0);
+                    } else {
+                        const prev = icon.dataset.prev || 100;
+                        setVolume(prev);
+                    }
+                });
+            });
         }
 
         function formatTime(sec) {
