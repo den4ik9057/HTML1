@@ -171,9 +171,7 @@
             .admin-tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 5px; }
             .admin-tab { white-space: nowrap; padding: 8px 12px; font-size: 0.82rem; }
             .admin-input-group { flex-direction: column; align-items: stretch; }
-            .admin-input-group input,
-            .admin-input-group select,
-            .admin-input-group button { width: 100% !important; }
+            .admin-input-group input, .admin-input-group select, .admin-input-group button { width: 100% !important; }
             .admin-stat-grid { grid-template-columns: repeat(2, 1fr); }
 
             #messenger-section { height: auto !important; max-height: none !important; }
@@ -227,7 +225,11 @@
 
             body { padding-bottom: 85px; }
 
-            .victoria-float-btn { bottom: 90px; left: 15px; width: 50px; height: 50px; font-size: 1.2rem; }
+            .victoria-float-btn { bottom: 100px; left: 15px; width: 48px; height: 48px; font-size: 1.1rem; z-index: 95; }
+            .victoria-float-btn .victoria-tooltip { display: none; }
+            body.player-expanded .victoria-float-btn { display: none; }
+            body.player-expanded .victoria-chat-container { display: none !important; }
+
             .victoria-chat-container {
                 left: 10px;
                 right: 10px;
@@ -1351,8 +1353,6 @@
             });
         }
 
-        // ==================== ADMIN PANEL ====================
-
         function getAdminFormState() {
             const state = { values: {}, focusedId: null, selectionStart: 0, selectionEnd: 0 };
             const inputs = document.querySelectorAll('#admin-users-list input, #admin-users-list select, #admin-posts-search, #admin-users-search, #broadcast-title, #broadcast-text');
@@ -1753,11 +1753,17 @@
             } catch (e) { console.error(e); }
         }
 
-        // ==================== END ADMIN ====================
-
         function toggleVictoriaChat() {
             const chat = document.getElementById('victoria-chat-modal');
-            chat.style.display = chat.style.display === 'flex' ? 'none' : 'flex';
+            const isOpening = chat.style.display !== 'flex';
+            chat.style.display = isOpening ? 'flex' : 'none';
+            if (isOpening && window.innerWidth <= 768) {
+                const playerWidget = document.querySelector('.right-sidebar .player-widget');
+                if (playerWidget && playerWidget.classList.contains('expanded')) {
+                    playerWidget.classList.remove('expanded');
+                    document.body.classList.remove('player-expanded');
+                }
+            }
         }
 
         async function sendVictoriaMessage() {
@@ -2052,7 +2058,6 @@
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
 
-        // ==================== МОБІЛЬНЕ МЕНЮ ====================
         function toggleMobileMenu() {
             const sidebar = document.querySelector('.sidebar');
             const overlay = document.getElementById('mobile-overlay');
@@ -2082,6 +2087,7 @@
                 if (!playerWidget) return;
                 if (e.target.closest('.now-playing') && !e.target.closest('button')) {
                     playerWidget.classList.toggle('expanded');
+                    document.body.classList.toggle('player-expanded', playerWidget.classList.contains('expanded'));
                 }
             }
         });
