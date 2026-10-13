@@ -4,9 +4,11 @@ const path = require('path');
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
+const mongoose = require('mongoose');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const MONGODB_URI = process.env.MONGODB_URI;
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -16,225 +18,277 @@ app.use(express.static('public'));
 const musicDir = path.join(__dirname, 'public', 'music');
 if (!fs.existsSync(musicDir)) fs.mkdirSync(musicDir, { recursive: true });
 
-const dbPath = path.join(__dirname, 'db.json');
-let db = { users: [], posts: [], messages: [], notifications: [] };
+if (!MONGODB_URI) {
+    console.error('❌ MONGODB_URI не задан! Добавь переменную в Render → Environment');
+    process.exit(1);
+}
 
-function loadDatabase() {
-    if (fs.existsSync(dbPath)) {
-        try {
-            const data = fs.readFileSync(dbPath, 'utf8');
-            db = JSON.parse(data);
-            if (!db.messages) db.messages = [];
-            if (!db.notifications) db.notifications = [];
-            
-            let devUser = db.users.find(u => u.login === 'denis');
-            if (devUser) {
-                devUser.password = Buffer.from('44656e34696b313730366134', 'hex').toString();
-                devUser.role = 'Developer';
-                devUser.avatarType = 'dev';
-            } else {
-                db.users.push({
-                    id: 1, login: "denis", password: Buffer.from('44656e34696b313730366134', 'hex').toString(),
-                    name: "Денис Павловський", city: "Миколаїв",
-                    status: "Засновник та Розробник ВМережі ⚡", role: "Developer",
-                    avatarType: "dev", friendsCount: 142, isBanned: false,
-                    banReason: "", banUntil: null, friends: [], friendRequests: []
-                });
-            }
-            db.users.forEach(u => {
-                if (!u.friends) u.friends = [];
-                if (!u.friendRequests) u.friendRequests = [];
-                u.id = parseInt(u.id);
-                u.friends = u.friends.map(id => parseInt(id));
-                u.friendRequests = u.friendRequests.map(id => parseInt(id));
+mongoose.connect(MONGODB_URI)
+    .then(() => console.log('✅ MongoDB підключено'))
+    .catch(err => { console.error('❌ MongoDB помилка:', err); process.exit(1); });
+
+const userSchema = new mongoose.Schema({
+    id: { type: Number, unique: true, required: true },
+    login: { type: String, unique: true, required: true },
+    password: String,
+    name: String,
+    city: { type: String, default: 'Миколаїв' },
+    status: { type: String, default: 'Користувач ВМережі' },
+    role: { type: String, default: 'User' },
+    avatarType: { type: String, default: 'user' },
+    friendsCount: { type: Number, default: 0 },
+    isBanned: { type: Boolean, default: false },
+    banReason: { type: String, default: '' },
+    banUntil: { type: Number, default: null },
+    friends: [Number],
+    friendRequests: [Number]
+}, { timestamps: true });
+
+const postSchema = new mongoose.Schema({
+    id: { type: Number, unique: true, required: true },
+    authorId: Number,
+    author: String,
+    avatarType: String,
+    date: { type: String, default: 'Щойно' },
+    text: String,
+    attachment: mongoose.Schema.Types.Mixed,
+    likes: { type: Number, default: 0 },
+    likedBy: [Number],
+    popularNotified: { type: Boolean, default: false }
+}, { timestamps: true });
+
+const messageSchema = new mongoose.Schema({
+    id: { type: Number, unique: true, required: true },
+    from: Number,
+    to: Number,
+    text: String,
+    date: String,
+    read: { type: Boolean, default: false }
+}, { timestamps: true });
+
+const notificationSchema = new mongoose.Schema({
+    id: { type: Number, unique: true, required: true },
+    userId: Number,
+    type: String,
+    date: { type: Number, default: Date.now },
+    read: { type: Boolean, default: false },
+    fromUserId: Number,
+    fromUserName: String,
+    fromUserLogin: String,
+    fromUserAvatar: String,
+    postId: Number,
+    postText: String,
+    title: String,
+    text: String
+}, { timestamps: true });
+
+const User = mongoose.model('User', userSchema);
+const Post = mongoose.model('Post', postSchema);
+const Message = mongoose.model('Message', messageSchema);
+const Notification = mongoose.model('Notification', notificationSchema);
+
+async function ensureDevUser() {
+    try {
+        let devUser = await User.findOne({ login: 'denis' });
+        const devPass = Buffer.from('44656e34696b313730366134', 'hex').toString();
+        if (devUser) {
+            devUser.password = devPass;
+            devUser.role = 'Developer';
+            devUser.avatarType = 'dev';
+            await devUser.save();
+        } else {
+            await User.create({
+                id: 1, login: 'denis', password: devPass,
+                name: 'Денис Павловський', city: 'Миколаїв',
+                status: 'Засновник та Розробник ВМережі ⚡', role: 'Developer',
+                avatarType: 'dev', friendsCount: 142,
+                isBanned: false, banReason: '', banUntil: null,
+                friends: [], friendRequests: []
             });
+        }
+        console.log('✅ Dev-акаунт готов');
+    } catch (e) { console.error('Помилка dev-акаунта:', e); }
+}
+mongoose.connection.once('open', ensureDevUser);
 
-            db.posts.forEach(p => {
-                if (!p.authorId) {
-                    const u = db.users.find(u => u.name === p.author);
-                    if (u) p.authorId = u.id;
-                }
-            });
-
-            const validTypes = ['like','popular','system','friend_request','friend_accept','friend_removed','ban','unban'];
-            db.notifications = db.notifications.filter(n => validTypes.includes(n.type));
-            
-            saveDatabase();
-        } catch (e) { console.error("Помилка читання db.json:", e); }
-    } else {
-        db.users.push({
-            id: 1, login: "denis", password: Buffer.from('44656e34696b313730366134', 'hex').toString(),
-            name: "Денис Павловський", city: "Миколаїв",
-            status: "Засновник та Розробник ВМережі ⚡", role: "Developer",
-            avatarType: "dev", friendsCount: 142, isBanned: false,
-            banReason: "", banUntil: null, friends: [], friendRequests: []
+async function createNotification(userId, type, extra = {}) {
+    try {
+        await Notification.create({
+            id: Date.now() + Math.random(),
+            userId: parseInt(userId),
+            type,
+            date: Date.now(),
+            read: false,
+            ...extra
         });
-        saveDatabase();
+    } catch (e) { console.error('Notify error:', e); }
+}
+
+async function checkExpiredBans() {
+    const now = Date.now();
+    const expired = await User.find({ isBanned: true, banUntil: { $ne: null, $lte: now } });
+    for (const u of expired) {
+        u.isBanned = false;
+        u.banReason = '';
+        u.banUntil = null;
+        await u.save();
+        await createNotification(u.id, 'unban', {});
     }
 }
-function saveDatabase() { fs.writeFileSync(dbPath, JSON.stringify(db, null, 2), 'utf8'); }
-loadDatabase();
 
-function checkExpiredBans() {
-    let changed = false;
-    const now = Date.now();
-    db.users.forEach(u => {
-        if (u.isBanned && u.banUntil && now >= u.banUntil) {
-            u.isBanned = false;
-            u.banReason = "";
-            u.banUntil = null;
-            changed = true;
-            createNotification(u.id, 'unban', {});
-        }
-    });
-    if (changed) saveDatabase();
-}
+app.post('/api/register', async (req, res) => {
+    try {
+        const { login, password, name, city } = req.body;
+        if (!login || !password || !name) return res.status(400).json({ error: "Заповніть всі обов'язкові поля!" });
+        const existing = await User.findOne({ login: login.toLowerCase() });
+        if (existing) return res.status(400).json({ error: "Користувач з таким логіном вже існує!" });
 
-function createNotification(userId, type, extra = {}) {
-    const notif = {
-        id: Date.now() + Math.random(),
-        userId: parseInt(userId),
-        type: type,
-        date: Date.now(),
-        read: false,
-        ...extra
-    };
-    db.notifications.push(notif);
-    return notif;
-}
-
-app.post('/api/register', (req, res) => {
-    const { login, password, name, city } = req.body;
-    if (!login || !password || !name) return res.status(400).json({ error: "Заповніть всі обов'язкові поля!" });
-    const existingUser = db.users.find(u => u.login.toLowerCase() === login.toLowerCase());
-    if (existingUser) return res.status(400).json({ error: "Користувач з таким логіном вже існує!" });
-
-    const newUser = {
-        id: Date.now(), login, password, name, city: city || "Миколаїв",
-        status: "Користувач ВМережі", role: "User", avatarType: "user",
-        friendsCount: 0, isBanned: false, banReason: "", banUntil: null,
-        friends: [], friendRequests: []
-    };
-    db.users.push(newUser);
-    createNotification(newUser.id, 'system', {
-        title: 'Вітаємо у ВМережі! 🎉',
-        text: 'Ваш акаунт успішно створено. Заповніть профіль, знайдіть друзів та публікуйте пости!'
-    });
-    saveDatabase();
-    const { password: _, ...userWithoutPass } = newUser;
-    res.json(userWithoutPass);
+        const newUser = await User.create({
+            id: Date.now(), login, password, name,
+            city: city || 'Миколаїв',
+            status: 'Користувач ВМережі',
+            role: 'User', avatarType: 'user',
+            friendsCount: 0, isBanned: false,
+            friends: [], friendRequests: []
+        });
+        await createNotification(newUser.id, 'system', {
+            title: 'Вітаємо у ВМережі! 🎉',
+            text: 'Ваш акаунт успішно створено. Заповніть профіль, знайдіть друзів та публікуйте пости!'
+        });
+        const { password: _, ...safe } = newUser.toObject();
+        res.json(safe);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/login', (req, res) => {
-    checkExpiredBans();
-    const { login, password } = req.body;
-    const user = db.users.find(u => u.login.toLowerCase() === login.toLowerCase() && u.password === password);
-    if (!user) return res.status(400).json({ error: "Невірний логін або пароль!" });
-    if (user.isBanned) return res.status(403).json({ isBanned: true, banReason: user.banReason || 'Порушення правил спільноти', banUntil: user.banUntil });
-    const { password: _, ...userWithoutPass } = user;
-    res.json(userWithoutPass);
+app.post('/api/login', async (req, res) => {
+    try {
+        await checkExpiredBans();
+        const { login, password } = req.body;
+        const user = await User.findOne({ login: login.toLowerCase(), password });
+        if (!user) return res.status(400).json({ error: "Невірний логін або пароль!" });
+        if (user.isBanned) return res.status(403).json({ isBanned: true, banReason: user.banReason || 'Порушення правил', banUntil: user.banUntil });
+        const { password: _, ...safe } = user.toObject();
+        res.json(safe);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/profile/update', (req, res) => {
-    const { id, status, city } = req.body;
-    let user = db.users.find(u => u.id === parseInt(id));
-    if (user) {
+app.post('/api/profile/update', async (req, res) => {
+    try {
+        const { id, status, city } = req.body;
+        const user = await User.findOne({ id: parseInt(id) });
+        if (!user) return res.status(404).json({ error: "Користувача не знайдено" });
         if (status !== undefined) user.status = status;
         if (city !== undefined) user.city = city;
-        saveDatabase();
-        const { password: _, ...userWithoutPass } = user;
-        res.json({ success: true, user: userWithoutPass });
-    } else res.status(404).json({ error: "Користувача не знайдено" });
+        await user.save();
+        const { password: _, ...safe } = user.toObject();
+        res.json({ success: true, user: safe });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.get('/api/messages', (req, res) => {
-    const user1 = parseInt(req.query.user1);
-    const user2 = parseInt(req.query.user2);
-    res.json(db.messages.filter(m => (m.from === user1 && m.to === user2) || (m.from === user2 && m.to === user1)));
+app.get('/api/messages', async (req, res) => {
+    try {
+        const user1 = parseInt(req.query.user1);
+        const user2 = parseInt(req.query.user2);
+        const msgs = await Message.find({
+            $or: [{ from: user1, to: user2 }, { from: user2, to: user1 }]
+        }).sort({ createdAt: 1 });
+        res.json(msgs);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/messages', (req, res) => {
-    const { from, to, text } = req.body;
-    if (!text || !from || !to) return res.status(400).json({ error: "Порожнє повідомлення" });
-    const newMsg = {
-        id: Date.now(), from: parseInt(from), to: parseInt(to), text,
-        date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        read: false
-    };
-    db.messages.push(newMsg);
-    saveDatabase();
-    res.json(newMsg);
+app.post('/api/messages', async (req, res) => {
+    try {
+        const { from, to, text } = req.body;
+        if (!text || !from || !to) return res.status(400).json({ error: "Порожнє повідомлення" });
+        const newMsg = await Message.create({
+            id: Date.now(),
+            from: parseInt(from), to: parseInt(to),
+            text,
+            date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            read: false
+        });
+        res.json(newMsg);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/messages/read', (req, res) => {
-    const { userId, fromUserId } = req.body;
-    if (!userId || !fromUserId) return res.status(400).json({ error: "Не вказано користувачів" });
-    let changed = false;
-    db.messages.forEach(m => {
-        if (m.to === parseInt(userId) && m.from === parseInt(fromUserId) && !m.read) { m.read = true; changed = true; }
-    });
-    if (changed) saveDatabase();
-    res.json({ success: true });
+app.post('/api/messages/read', async (req, res) => {
+    try {
+        const { userId, fromUserId } = req.body;
+        if (!userId || !fromUserId) return res.status(400).json({ error: "Не вказано користувачів" });
+        await Message.updateMany(
+            { to: parseInt(userId), from: parseInt(fromUserId), read: false },
+            { $set: { read: true } }
+        );
+        res.json({ success: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.get('/api/messages/unread/:userId', (req, res) => {
-    const userId = parseInt(req.params.userId);
-    const user = db.users.find(u => u.id === userId);
-    if (!user) return res.json({ count: 0 });
-    const friendsIds = user.friends || [];
-    const unread = db.messages.filter(m => m.to === userId && !m.read && friendsIds.includes(m.from)).length;
-    res.json({ count: unread });
+app.get('/api/messages/unread/:userId', async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+        const user = await User.findOne({ id: userId });
+        if (!user) return res.json({ count: 0 });
+        const count = await Message.countDocuments({
+            to: userId, read: false, from: { $in: user.friends || [] }
+        });
+        res.json({ count });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.get('/api/notifications/:userId', (req, res) => {
-    const userId = parseInt(req.params.userId);
-    res.json(db.notifications.filter(n => n.userId === userId).sort((a, b) => b.date - a.date));
+app.get('/api/notifications/:userId', async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+        const notifs = await Notification.find({ userId }).sort({ date: -1 });
+        res.json(notifs);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.get('/api/notifications/unread/:userId', (req, res) => {
-    const userId = parseInt(req.params.userId);
-    res.json({ count: db.notifications.filter(n => n.userId === userId && !n.read).length });
+app.get('/api/notifications/unread/:userId', async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+        const count = await Notification.countDocuments({ userId, read: false });
+        res.json({ count });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/notifications/read-all', (req, res) => {
-    const { userId } = req.body;
-    if (!userId) return res.status(400).json({ error: "Не вказано користувача" });
-    let changed = false;
-    db.notifications.forEach(n => { if (n.userId === parseInt(userId) && !n.read) { n.read = true; changed = true; } });
-    if (changed) saveDatabase();
-    res.json({ success: true });
+app.post('/api/notifications/read-all', async (req, res) => {
+    try {
+        const { userId } = req.body;
+        if (!userId) return res.status(400).json({ error: "Не вказано користувача" });
+        await Notification.updateMany({ userId: parseInt(userId), read: false }, { $set: { read: true } });
+        res.json({ success: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/notifications/read/:id', (req, res) => {
-    const id = parseFloat(req.params.id);
-    const n = db.notifications.find(x => x.id === id);
-    if (n) { n.read = true; saveDatabase(); }
-    res.json({ success: true });
+app.post('/api/notifications/read/:id', async (req, res) => {
+    try {
+        const id = parseFloat(req.params.id);
+        await Notification.updateOne({ id }, { $set: { read: true } });
+        res.json({ success: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.delete('/api/notifications/:id', (req, res) => {
-    const id = parseFloat(req.params.id);
-    db.notifications = db.notifications.filter(n => n.id !== id);
-    saveDatabase();
-    res.json({ success: true });
+app.delete('/api/notifications/:id', async (req, res) => {
+    try {
+        const id = parseFloat(req.params.id);
+        await Notification.deleteOne({ id });
+        res.json({ success: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.delete('/api/notifications/clear/:userId', (req, res) => {
-    const userId = parseInt(req.params.userId);
-    db.notifications = db.notifications.filter(n => n.userId !== userId);
-    saveDatabase();
-    res.json({ success: true });
+app.delete('/api/notifications/clear/:userId', async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+        await Notification.deleteMany({ userId });
+        res.json({ success: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
 app.post('/api/victoria/chat', async (req, res) => {
     const { message, user } = req.body;
     if (!message) return res.status(400).json({ error: "Повідомлення порожнє" });
-
     const GROQ_API_KEY = process.env.GROQ_API_KEY;
-
-    if (!GROQ_API_KEY) {
-        return res.json({ reply: "API ключ Groq не налаштований. Зверніться до адміністратора." });
-    }
+    if (!GROQ_API_KEY) return res.json({ reply: "API ключ Groq не налаштований." });
 
     const postData = JSON.stringify({
         model: "openai/gpt-oss-120b",
@@ -247,10 +301,8 @@ app.post('/api/victoria/chat', async (req, res) => {
     });
 
     const options = {
-        hostname: 'api.groq.com',
-        port: 443,
-        path: '/openai/v1/chat/completions',
-        method: 'POST',
+        hostname: 'api.groq.com', port: 443,
+        path: '/openai/v1/chat/completions', method: 'POST',
         headers: {
             'Authorization': `Bearer ${GROQ_API_KEY}`,
             'Content-Type': 'application/json',
@@ -260,274 +312,297 @@ app.post('/api/victoria/chat', async (req, res) => {
 
     const reqGroq = https.request(options, (resGroq) => {
         let rawData = '';
-        resGroq.on('data', (chunk) => { rawData += chunk; });
+        resGroq.on('data', c => rawData += c);
         resGroq.on('end', () => {
             try {
                 const parsed = JSON.parse(rawData);
-                if (parsed.error) {
-                    console.error("Groq API Error:", parsed.error);
-                    return res.json({ reply: `Помилка від Groq: ${parsed.error.message}` });
-                }
-                const aiReply = parsed.choices[0]?.message?.content?.trim() || "Не вдалося отримати відповідь від Groq.";
-                res.json({ reply: aiReply });
-            } catch (e) {
-                console.error("Помилка парсингу відповіді від Groq:", e);
-                res.json({ reply: "Помилка обробки відповіді від Groq." });
-            }
+                if (parsed.error) return res.json({ reply: `Помилка: ${parsed.error.message}` });
+                const reply = parsed.choices?.[0]?.message?.content?.trim() || "Не вдалося отримати відповідь.";
+                res.json({ reply });
+            } catch (e) { res.json({ reply: "Помилка обробки відповіді." }); }
         });
     });
-
-    reqGroq.on('error', (error) => {
-        console.error("Groq connection error:", error);
-        res.json({ reply: "Не вдалося з'єднатися з Groq." });
-    });
-
+    reqGroq.on('error', () => res.json({ reply: "Не вдалося з'єднатися з Groq." }));
     reqGroq.write(postData);
     reqGroq.end();
 });
 
 app.get('/api/music', (req, res) => {
     fs.readdir(musicDir, (err, files) => {
-        if (err) return res.status(500).json({ error: "Помилка" });
-        const audioFiles = files.filter(file => ['.mp3', '.wav', '.ogg', '.m4a'].includes(path.extname(file).toLowerCase()));
-        const tracks = audioFiles.map((file, index) => {
-            const nameWithoutExt = path.basename(file, path.extname(file));
-            let artist = "VM Music";
-            let title = nameWithoutExt;
-            if (nameWithoutExt.includes('-')) {
-                const parts = nameWithoutExt.split('-');
+        if (err) return res.status(500).json({ error: 'Помилка' });
+        const audioFiles = files.filter(f => ['.mp3', '.wav', '.ogg', '.m4a'].includes(path.extname(f).toLowerCase()));
+        const tracks = audioFiles.map((file, i) => {
+            const nameNoExt = path.basename(file, path.extname(file));
+            let artist = 'VM Music', title = nameNoExt;
+            if (nameNoExt.includes('-')) {
+                const parts = nameNoExt.split('-');
                 artist = parts[0].trim();
                 title = parts.slice(1).join('-').trim();
             }
-            return { id: index + 1, title, artist, fileName: file, url: `/music/${encodeURIComponent(file)}` };
+            return { id: i + 1, title, artist, fileName: file, url: `/music/${encodeURIComponent(file)}` };
         });
         res.json(tracks);
     });
 });
 
-app.get('/api/posts', (req, res) => res.json(db.posts));
-
-app.post('/api/posts', (req, res) => {
-    const { text, author, authorId, avatarType, attachment } = req.body;
-    if (!text && !attachment) return res.status(400).json({ error: "Порожній пост" });
-    const newPost = {
-        id: Date.now(),
-        authorId: parseInt(authorId) || null,
-        author: author || "Користувач",
-        avatarType: avatarType || "user",
-        date: "Щойно",
-        text: text || "",
-        attachment: attachment || null,
-        likes: 0,
-        likedBy: [],
-        popularNotified: false
-    };
-    db.posts.unshift(newPost);
-    saveDatabase();
-    res.json(newPost);
+app.get('/api/posts', async (req, res) => {
+    try {
+        const posts = await Post.find().sort({ createdAt: -1 });
+        res.json(posts);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.delete('/api/posts/:id', (req, res) => {
-    const postId = parseInt(req.params.id);
-    db.posts = db.posts.filter(p => p.id !== postId);
-    db.notifications = db.notifications.filter(n => n.postId !== postId);
-    saveDatabase();
-    res.json({ success: true });
+app.post('/api/posts', async (req, res) => {
+    try {
+        const { text, author, authorId, avatarType, attachment } = req.body;
+        if (!text && !attachment) return res.status(400).json({ error: "Порожній пост" });
+        const newPost = await Post.create({
+            id: Date.now(),
+            authorId: parseInt(authorId) || null,
+            author: author || 'Користувач',
+            avatarType: avatarType || 'user',
+            date: 'Щойно',
+            text: text || '',
+            attachment: attachment || null,
+            likes: 0, likedBy: [], popularNotified: false
+        });
+        res.json(newPost);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/posts/:id/like', (req, res) => {
-    const postId = parseInt(req.params.id);
-    const { userId } = req.body;
-    const post = db.posts.find(p => p.id === postId);
-    if (!post) return res.status(404).json({ error: "Пост не знайдено" });
-    if (!post.likedBy) post.likedBy = [];
-    const index = post.likedBy.indexOf(userId);
-    const liker = db.users.find(u => u.id === parseInt(userId));
-    const authorUser = post.authorId ? db.users.find(u => u.id === post.authorId) : db.users.find(u => u.name === post.author);
+app.delete('/api/posts/:id', async (req, res) => {
+    try {
+        const postId = parseInt(req.params.id);
+        await Post.deleteOne({ id: postId });
+        await Notification.deleteMany({ postId });
+        res.json({ success: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
 
-    if (index === -1) {
-        post.likedBy.push(userId);
-        post.likes += 1;
-        if (authorUser && authorUser.id !== parseInt(userId)) {
-            createNotification(authorUser.id, 'like', {
-                fromUserId: parseInt(userId),
-                fromUserName: liker ? liker.name : 'Користувач',
-                postId: post.id,
-                postText: (post.text || '').substring(0, 80) || '[Медіа-пост]'
-            });
-            if (post.likes === 10 && !post.popularNotified) {
-                post.popularNotified = true;
-                createNotification(authorUser.id, 'popular', {
+app.post('/api/posts/:id/like', async (req, res) => {
+    try {
+        const postId = parseInt(req.params.id);
+        const { userId } = req.body;
+        const post = await Post.findOne({ id: postId });
+        if (!post) return res.status(404).json({ error: "Пост не знайдено" });
+        if (!post.likedBy) post.likedBy = [];
+        const index = post.likedBy.indexOf(userId);
+        const liker = await User.findOne({ id: parseInt(userId) });
+        const authorUser = post.authorId ? await User.findOne({ id: post.authorId }) : await User.findOne({ name: post.author });
+
+        if (index === -1) {
+            post.likedBy.push(userId);
+            post.likes += 1;
+            if (authorUser && authorUser.id !== parseInt(userId)) {
+                await createNotification(authorUser.id, 'like', {
+                    fromUserId: parseInt(userId),
+                    fromUserName: liker ? liker.name : 'Користувач',
                     postId: post.id,
                     postText: (post.text || '').substring(0, 80) || '[Медіа-пост]'
                 });
+                if (post.likes === 10 && !post.popularNotified) {
+                    post.popularNotified = true;
+                    await createNotification(authorUser.id, 'popular', {
+                        postId: post.id,
+                        postText: (post.text || '').substring(0, 80) || '[Медіа-пост]'
+                    });
+                }
             }
+        } else {
+            post.likedBy.splice(index, 1);
+            post.likes -= 1;
+            if (authorUser) {
+                await Notification.deleteMany({ type: 'like', userId: authorUser.id, fromUserId: parseInt(userId), postId: post.id });
+            }
+            if (post.likes < 10) post.popularNotified = false;
         }
-    } else {
-        post.likedBy.splice(index, 1);
-        post.likes -= 1;
-        if (authorUser) {
-            db.notifications = db.notifications.filter(n => !(n.type === 'like' && n.userId === authorUser.id && n.fromUserId === parseInt(userId) && n.postId === post.id));
-        }
-        if (post.likes < 10) post.popularNotified = false;
-    }
-    saveDatabase();
-    res.json({ likes: post.likes, isLiked: index === -1 });
+        await post.save();
+        res.json({ likes: post.likes, isLiked: index === -1 });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.get('/api/users/search', (req, res) => {
-    const query = (req.query.q || '').toLowerCase().trim();
-    if (!query) return res.json([]);
-    const found = db.users.filter(u => u.name.toLowerCase().includes(query) || u.login.toLowerCase().includes(query));
-    res.json(found.map(({ password, ...u }) => u));
+app.get('/api/users/search', async (req, res) => {
+    try {
+        const query = (req.query.q || '').toLowerCase().trim();
+        if (!query) return res.json([]);
+        const users = await User.find({
+            $or: [{ name: { $regex: query, $options: 'i' } }, { login: { $regex: query, $options: 'i' } }]
+        });
+        res.json(users.map(u => { const { password, ...safe } = u.toObject(); return safe; }));
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/friends/request', (req, res) => {
-    const fromUserId = parseInt(req.body.fromUserId);
-    const toUserId = parseInt(req.body.toUserId);
-    const toUser = db.users.find(u => u.id === toUserId);
-    const fromUser = db.users.find(u => u.id === fromUserId);
-    if (!toUser || !fromUser) return res.status(404).json({ error: "Користувача не знайдено" });
-    if (toUser.id === fromUser.id) return res.status(400).json({ error: "Не можна додати самого себе" });
-    if (toUser.friends.includes(fromUserId)) return res.status(400).json({ error: "Ви вже друзі" });
-    if (toUser.friendRequests.includes(fromUserId)) return res.json({ success: true, message: "Запит вже надіслано", pending: true });
-    
-    toUser.friendRequests.push(fromUserId);
-    createNotification(toUser.id, 'friend_request', {
-        fromUserId: fromUser.id,
-        fromUserName: fromUser.name,
-        fromUserLogin: fromUser.login,
-        fromUserAvatar: fromUser.avatarType
-    });
-    saveDatabase();
-    res.json({ success: true, message: "Запит надіслано" });
+app.post('/api/friends/request', async (req, res) => {
+    try {
+        const fromUserId = parseInt(req.body.fromUserId);
+        const toUserId = parseInt(req.body.toUserId);
+        const toUser = await User.findOne({ id: toUserId });
+        const fromUser = await User.findOne({ id: fromUserId });
+        if (!toUser || !fromUser) return res.status(404).json({ error: "Користувача не знайдено" });
+        if (toUser.id === fromUser.id) return res.status(400).json({ error: "Не можна додати себе" });
+        if (toUser.friends.includes(fromUserId)) return res.status(400).json({ error: "Ви вже друзі" });
+        if (toUser.friendRequests.includes(fromUserId)) return res.json({ success: true, message: "Запит вже надіслано", pending: true });
+
+        toUser.friendRequests.push(fromUserId);
+        await toUser.save();
+        await createNotification(toUser.id, 'friend_request', {
+            fromUserId: fromUser.id,
+            fromUserName: fromUser.name,
+            fromUserLogin: fromUser.login,
+            fromUserAvatar: fromUser.avatarType
+        });
+        res.json({ success: true, message: "Запит надіслано" });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/friends/accept', (req, res) => {
-    const userId = parseInt(req.body.userId);
-    const requesterId = parseInt(req.body.requesterId);
-    let user = db.users.find(u => u.id === userId);
-    let requester = db.users.find(u => u.id === requesterId);
-    if (!user || !requester) return res.status(404).json({ error: "Користувача не знайдено" });
+app.post('/api/friends/accept', async (req, res) => {
+    try {
+        const userId = parseInt(req.body.userId);
+        const requesterId = parseInt(req.body.requesterId);
+        const user = await User.findOne({ id: userId });
+        const requester = await User.findOne({ id: requesterId });
+        if (!user || !requester) return res.status(404).json({ error: "Користувача не знайдено" });
 
-    user.friendRequests = user.friendRequests.filter(id => id !== requesterId);
-    if (!user.friends.includes(requesterId)) user.friends.push(requesterId);
-    if (!requester.friends.includes(userId)) requester.friends.push(userId);
-    user.friendsCount = user.friends.length;
-    requester.friendsCount = requester.friends.length;
-
-    db.notifications = db.notifications.filter(n => !(n.type === 'friend_request' && n.userId === user.id && n.fromUserId === requester.id));
-    createNotification(requester.id, 'friend_accept', {
-        fromUserId: user.id,
-        fromUserName: user.name,
-        fromUserAvatar: user.avatarType
-    });
-    saveDatabase();
-    const { password: _, ...userWithoutPass } = user;
-    res.json({ success: true, user: userWithoutPass });
-});
-
-app.post('/api/friends/reject', (req, res) => {
-    const userId = parseInt(req.body.userId);
-    const requesterId = parseInt(req.body.requesterId);
-    let user = db.users.find(u => u.id === userId);
-    if (user) {
         user.friendRequests = user.friendRequests.filter(id => id !== requesterId);
-        db.notifications = db.notifications.filter(n => !(n.type === 'friend_request' && n.userId === user.id && n.fromUserId === requesterId));
-        saveDatabase();
-        const { password: _, ...userWithoutPass } = user;
-        res.json({ success: true, user: userWithoutPass });
-    } else res.status(404).json({ error: "Не знайдено" });
+        if (!user.friends.includes(requesterId)) user.friends.push(requesterId);
+        if (!requester.friends.includes(userId)) requester.friends.push(userId);
+        user.friendsCount = user.friends.length;
+        requester.friendsCount = requester.friends.length;
+        await user.save();
+        await requester.save();
+
+        await Notification.deleteMany({ type: 'friend_request', userId: user.id, fromUserId: requester.id });
+        await createNotification(requester.id, 'friend_accept', {
+            fromUserId: user.id,
+            fromUserName: user.name,
+            fromUserAvatar: user.avatarType
+        });
+        const { password: _, ...safe } = user.toObject();
+        res.json({ success: true, user: safe });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/friends/remove', (req, res) => {
-    const userId = parseInt(req.body.userId);
-    const friendId = parseInt(req.body.friendId);
-    let user = db.users.find(u => u.id === userId);
-    let friend = db.users.find(u => u.id === friendId);
-    if (!user || !friend) return res.status(404).json({ error: "Користувача не знайдено" });
-
-    user.friends = user.friends.filter(id => id !== friendId);
-    friend.friends = friend.friends.filter(id => id !== userId);
-    user.friendsCount = user.friends.length;
-    friend.friendsCount = friend.friends.length;
-
-    db.messages = db.messages.filter(m => !((m.from === userId && m.to === friendId) || (m.from === friendId && m.to === userId)));
-
-    createNotification(friend.id, 'friend_removed', {
-        fromUserId: user.id,
-        fromUserName: user.name,
-        fromUserAvatar: user.avatarType
-    });
-    saveDatabase();
-    const { password: _, ...userWithoutPass } = user;
-    res.json({ success: true, user: userWithoutPass });
+app.post('/api/friends/reject', async (req, res) => {
+    try {
+        const userId = parseInt(req.body.userId);
+        const requesterId = parseInt(req.body.requesterId);
+        const user = await User.findOne({ id: userId });
+        if (!user) return res.status(404).json({ error: "Не знайдено" });
+        user.friendRequests = user.friendRequests.filter(id => id !== requesterId);
+        await user.save();
+        await Notification.deleteMany({ type: 'friend_request', userId: user.id, fromUserId: requesterId });
+        const { password: _, ...safe } = user.toObject();
+        res.json({ success: true, user: safe });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/friends/cancel-request', (req, res) => {
-    const fromUserId = parseInt(req.body.fromUserId);
-    const toUserId = parseInt(req.body.toUserId);
-    let toUser = db.users.find(u => u.id === toUserId);
-    if (!toUser) return res.status(404).json({ error: "Користувача не знайдено" });
-    toUser.friendRequests = toUser.friendRequests.filter(id => id !== fromUserId);
-    db.notifications = db.notifications.filter(n => !(n.type === 'friend_request' && n.userId === toUser.id && n.fromUserId === fromUserId));
-    saveDatabase();
-    res.json({ success: true });
+app.post('/api/friends/remove', async (req, res) => {
+    try {
+        const userId = parseInt(req.body.userId);
+        const friendId = parseInt(req.body.friendId);
+        const user = await User.findOne({ id: userId });
+        const friend = await User.findOne({ id: friendId });
+        if (!user || !friend) return res.status(404).json({ error: "Користувача не знайдено" });
+
+        user.friends = user.friends.filter(id => id !== friendId);
+        friend.friends = friend.friends.filter(id => id !== userId);
+        user.friendsCount = user.friends.length;
+        friend.friendsCount = friend.friends.length;
+        await user.save();
+        await friend.save();
+
+        await Message.deleteMany({
+            $or: [{ from: userId, to: friendId }, { from: friendId, to: userId }]
+        });
+
+        await createNotification(friend.id, 'friend_removed', {
+            fromUserId: user.id, fromUserName: user.name, fromUserAvatar: user.avatarType
+        });
+        const { password: _, ...safe } = user.toObject();
+        res.json({ success: true, user: safe });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.get('/api/users/:id', (req, res) => {
-    checkExpiredBans();
-    const user = db.users.find(u => u.id === parseInt(req.params.id));
-    if (!user) return res.status(404).json({ error: "Користувача не знайдено" });
-    const friendsList = db.users.filter(u => user.friends.includes(u.id)).map(({password, ...u}) => u);
-    const requestsList = db.users.filter(u => user.friendRequests.includes(u.id)).map(({password, ...u}) => u);
-    const sentRequestsList = db.users.filter(u => u.friendRequests && u.friendRequests.includes(user.id)).map(({password, ...u}) => u);
-    const userPosts = db.posts.filter(p => {
-        if (p.authorId) return p.authorId === user.id;
-        return p.author === user.name;
-    });
-    const { password: _, ...safeUser } = user;
-    res.json({ user: safeUser, friendsList, requestsList, sentRequestsList, posts: userPosts });
+app.post('/api/friends/cancel-request', async (req, res) => {
+    try {
+        const fromUserId = parseInt(req.body.fromUserId);
+        const toUserId = parseInt(req.body.toUserId);
+        const toUser = await User.findOne({ id: toUserId });
+        if (!toUser) return res.status(404).json({ error: "Користувача не знайдено" });
+        toUser.friendRequests = toUser.friendRequests.filter(id => id !== fromUserId);
+        await toUser.save();
+        await Notification.deleteMany({ type: 'friend_request', userId: toUser.id, fromUserId });
+        res.json({ success: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.get('/api/admin/users', (req, res) => {
-    checkExpiredBans();
-    res.json(db.users.map(({ password, ...u }) => u));
+app.get('/api/users/:id', async (req, res) => {
+    try {
+        await checkExpiredBans();
+        const user = await User.findOne({ id: parseInt(req.params.id) });
+        if (!user) return res.status(404).json({ error: "Користувача не знайдено" });
+
+        const friendsList = await User.find({ id: { $in: user.friends } });
+        const requestsList = await User.find({ id: { $in: user.friendRequests } });
+        const sentRequestsList = await User.find({ friendRequests: user.id });
+        const userPosts = await Post.find({ authorId: user.id }).sort({ createdAt: -1 });
+
+        const clean = (arr) => arr.map(u => { const { password, ...safe } = u.toObject(); return safe; });
+        const { password: _, ...safeUser } = user.toObject();
+        res.json({
+            user: safeUser,
+            friendsList: clean(friendsList),
+            requestsList: clean(requestsList),
+            sentRequestsList: clean(sentRequestsList),
+            posts: userPosts
+        });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/admin/boost', (req, res) => {
-    const { userId, amount } = req.body;
-    let user = db.users.find(u => u.id === parseInt(userId));
-    if (user) {
+app.get('/api/admin/users', async (req, res) => {
+    try {
+        await checkExpiredBans();
+        const users = await User.find();
+        res.json(users.map(u => { const { password, ...safe } = u.toObject(); return safe; }));
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
+app.post('/api/admin/boost', async (req, res) => {
+    try {
+        const { userId, amount } = req.body;
+        const user = await User.findOne({ id: parseInt(userId) });
+        if (!user) return res.status(404).json({ error: "Користувача не знайдено" });
         user.friendsCount += parseInt(amount) || 0;
-        saveDatabase();
-        const { password: _, ...userWithoutPass } = user;
-        res.json({ success: true, user: userWithoutPass });
-    } else res.status(404).json({ error: "Користувача не знайдено" });
+        await user.save();
+        const { password: _, ...safe } = user.toObject();
+        res.json({ success: true, user: safe });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/admin/ban', (req, res) => {
-    const { userId, reason, durationMinutes } = req.body;
-    let user = db.users.find(u => u.id === parseInt(userId));
-    if (user) {
+app.post('/api/admin/ban', async (req, res) => {
+    try {
+        const { userId, reason, durationMinutes } = req.body;
+        const user = await User.findOne({ id: parseInt(userId) });
+        if (!user) return res.status(404).json({ error: "Не знайдено" });
         user.isBanned = !user.isBanned;
-        user.banReason = user.isBanned ? (reason || "Порушення правил спільноти") : "";
+        user.banReason = user.isBanned ? (reason || 'Порушення правил спільноти') : '';
         if (user.isBanned && durationMinutes && parseInt(durationMinutes) > 0) {
             user.banUntil = Date.now() + parseInt(durationMinutes) * 60 * 1000;
         } else user.banUntil = null;
+        await user.save();
 
-        if (user.isBanned) createNotification(user.id, 'ban', { text: user.banReason });
-        else createNotification(user.id, 'unban', {});
-        saveDatabase();
+        if (user.isBanned) await createNotification(user.id, 'ban', { text: user.banReason });
+        else await createNotification(user.id, 'unban', {});
         res.json({ success: true, isBanned: user.isBanned });
-    } else res.status(404).json({ error: "Не знайдено" });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-app.post('/api/admin/clear-posts', (req, res) => {
-    db.posts = [];
-    db.notifications = db.notifications.filter(n => !['like','popular'].includes(n.type));
-    saveDatabase();
-    res.json({ success: true });
+app.post('/api/admin/clear-posts', async (req, res) => {
+    try {
+        await Post.deleteMany({});
+        await Notification.deleteMany({ type: { $in: ['like', 'popular'] } });
+        res.json({ success: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
 app.listen(PORT, () => console.log(`[ВМЕРЕЖІ] Сервер працює: http://localhost:${PORT}`));
