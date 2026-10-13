@@ -237,7 +237,7 @@ app.post('/api/victoria/chat', async (req, res) => {
     }
 
     const postData = JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-120b",
         messages: [
             { role: "system", content: `Ти — Вікторія, привітний та корисний AI-асистент соціальної мережі «ВМережі». Відповідай українською мовою. Користувача звати ${user}.` },
             { role: "user", content: message }
