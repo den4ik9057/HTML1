@@ -1412,7 +1412,7 @@
 
         function getAdminFormState() {
             const state = { values: {}, focusedId: null, selectionStart: 0, selectionEnd: 0 };
-            const inputs = document.querySelectorAll('#admin-users-list input, #admin-users-list select, #admin-posts-search, #admin-users-search, #broadcast-title, #broadcast-text');
+            const inputs = document.querySelectorAll('#admin-users-list input, #admin-users-list select, #admin-posts-list input, #admin-posts-search, #admin-users-search, #broadcast-title, #broadcast-text');
             inputs.forEach(el => {
                 if (el.id && el.value !== undefined && el.value !== '') state.values[el.id] = el.value;
             });
@@ -1697,19 +1697,49 @@
             listEl.innerHTML = '';
             posts.forEach(p => {
                 listEl.innerHTML += `
-                    <div class="admin-post-item">
-                        <div class="post-content-admin">
-                            <div class="post-author-admin">${p.author}</div>
-                            <div class="post-text-admin">${(p.text || '').substring(0, 200) || '[Медіа-пост]'}</div>
-                            <div class="post-stats-admin">❤️ ${p.likes} • ID: ${p.id}</div>
+                    <div class="admin-post-item" style="flex-direction: column; gap: 8px;">
+                        <div style="display: flex; gap: 10px; width: 100%;">
+                            <div class="post-content-admin">
+                                <div class="post-author-admin">${p.author}</div>
+                                <div class="post-text-admin">${(p.text || '').substring(0, 200) || '[Медіа-пост]'}</div>
+                                <div class="post-stats-admin">❤️ ${p.likes} • ID: ${p.id}</div>
+                            </div>
+                            <button onclick="adminDeletePost(${p.id})" class="admin-btn delete" style="flex-shrink: 0;">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
                         </div>
-                        <button onclick="adminDeletePost(${p.id})" class="admin-btn delete" style="flex-shrink: 0;">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                        <div class="admin-input-group" style="display: flex; gap: 6px; align-items: center;">
+                            <input type="number" id="boost-likes-${p.id}" placeholder="Лайків" value="100" style="width: 90px;">
+                            <button onclick="adminBoostLikes(${p.id}, 1)" class="admin-btn boost" style="padding: 6px 10px; font-size: 0.78rem;">
+                                <i class="fa-solid fa-plus"></i> Додати
+                            </button>
+                            <button onclick="adminBoostLikes(${p.id}, -1)" class="admin-btn ban" style="padding: 6px 10px; font-size: 0.78rem;">
+                                <i class="fa-solid fa-minus"></i> Забрати
+                            </button>
+                        </div>
                     </div>
                 `;
             });
             restoreAdminFormState(state);
+        }
+
+        async function adminBoostLikes(postId, sign) {
+            const input = document.getElementById(`boost-likes-${postId}`);
+            const rawAmount = parseInt(input.value) || 0;
+            const amount = sign * Math.abs(rawAmount);
+            if (amount === 0) return alert('Введіть число більше 0!');
+            const res = await fetch('/api/admin/boost-likes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminId: currentUser.id, postId, amount })
+            });
+            const data = await res.json();
+            if (data.success) {
+                loadAdminPosts();
+                loadPosts();
+            } else {
+                alert(data.error || 'Помилка');
+            }
         }
 
         async function adminDeletePost(postId) {
