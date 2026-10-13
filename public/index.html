@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ВМережі // Українська Соціальна Мережа</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -43,6 +43,35 @@
         })();
     </script>
     <style>
+        /* ==== ГЛОБАЛЬНЫЙ ФИКС ТАПА НА МОБИЛЬНЫХ ==== */
+        * { -webkit-tap-highlight-color: transparent; }
+        button, a, input, select, textarea, [onclick] { outline: none; -webkit-tap-highlight-color: transparent; }
+        button:focus, a:focus, input:focus, select:focus, textarea:focus { outline: none; }
+        button:focus-visible, a:focus-visible { outline: 2px solid #00f2fe; outline-offset: 2px; }
+        @media (hover: none) and (pointer: coarse) {
+            button:focus, a:focus, [onclick]:focus { outline: none !important; box-shadow: none; }
+            .btn-glow:hover, .admin-btn:hover, .settings-btn:hover, .like-btn:hover, .play-btn:hover,
+            .nav-item:hover a, .theme-option:hover, .post-card:hover { transform: none !important; }
+            .btn-glow:active { transform: scale(0.96); transition: transform 0.1s; }
+            .admin-btn:active { transform: scale(0.96); transition: transform 0.1s; }
+            .settings-btn { outline: none; -webkit-tap-highlight-color: transparent; }
+            .settings-btn:hover { color: #94a3b8; border-color: rgba(255,255,255,0.1); transform: none; }
+            .settings-btn:active { transform: scale(0.92); background: rgba(255,255,255,0.1); }
+            .sidebar .nav-item:hover a { background: transparent; color: #94a3b8; }
+            .sidebar .nav-item.active a { background: rgba(0, 242, 254, 0.1); color: #00f2fe; }
+            .sidebar .nav-item:active a { background: rgba(0, 242, 254, 0.15); }
+            .like-btn:active { transform: scale(0.92); }
+            .play-btn:active { transform: scale(0.88); }
+            .btn-play-main:active { transform: scale(0.9); }
+            .btn-icon:active { transform: scale(0.9); }
+            .theme-option:hover { border-color: rgba(255,255,255,0.08); transform: none; }
+            .theme-option.active:hover { border-color: #00f2fe; }
+            .victoria-float-btn:hover { transform: none; }
+            .victoria-float-btn:active { transform: scale(0.9); }
+            .attach-icons i:hover { color: #64748b; }
+            .attach-icons i:active { color: #00f2fe; transform: scale(1.1); }
+        }
+
         .admin-tabs { display: flex; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; flex-wrap: wrap; }
         .admin-tab { padding: 10px 16px; background: none; border: none; color: #94a3b8; cursor: pointer; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid transparent; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
         .admin-tab:hover { color: #00f2fe; }
@@ -85,7 +114,6 @@
         .admin-post-item .post-stats-admin { color: #64748b; font-size: 0.7rem; margin-top: 4px; }
         .admin-empty { color: #64748b; text-align: center; padding: 30px; font-size: 0.9rem; }
 
-        /* ==================== МОБІЛЬНА АДАПТАЦІЯ ==================== */
         .mobile-menu-btn {
             display: none;
             background: none;
@@ -96,6 +124,8 @@
             padding: 8px;
             margin-right: 8px;
             transition: color 0.2s;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
         }
         .mobile-menu-btn:hover { color: #00f2fe; }
         body.theme-light .mobile-menu-btn { color: #1e293b; }
@@ -122,11 +152,12 @@
             .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
             .header-container { padding: 0 12px; gap: 6px; }
             .logo span { font-size: 1.1rem; display: inline; }
-            .logo-icon { font-size: 1.5rem; }
+            .logo-icon { font-size: 1.4rem; }
             .search-bar { display: none; }
             .user-mini { gap: 6px; }
             .user-mini span { display: none; }
-            .settings-btn { width: 34px; height: 34px; margin-left: 0; }
+            .settings-btn { width: 34px; height: 34px; margin-left: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+            .user-mini > button:last-child { margin-left: 2px !important; }
 
             .sidebar {
                 position: fixed;
