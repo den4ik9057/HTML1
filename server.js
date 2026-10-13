@@ -53,6 +53,7 @@ const userSchema = new mongoose.Schema({
     isBanned: { type: Boolean, default: false },
     banReason: { type: String, default: '' },
     banUntil: { type: Number, default: null },
+    lastSeen: { type: Number, default: 0 },
     friends: [Number],
     friendRequests: [Number]
 }, { timestamps: true });
@@ -100,6 +101,9 @@ const Post = mongoose.model('Post', postSchema);
 const Message = mongoose.model('Message', messageSchema);
 const Notification = mongoose.model('Notification', notificationSchema);
 
+// ══════ ONLINE: порог онлайну (2 хвилини) ══════
+const ONLINE_THRESHOLD = 2 * 60 * 1000;
+
 async function ensureDevUser() {
     try {
         let devUser = await User.findOne({ login: 'denis' });
@@ -116,7 +120,7 @@ async function ensureDevUser() {
                 status: 'Засновник та Розробник ВМережі ⚡', role: 'Developer',
                 avatarType: 'dev', friendsCount: 142,
                 isBanned: false, banReason: '', banUntil: null,
-                friends: [], friendRequests: []
+                lastSeen: 0, friends: [], friendRequests: []
             });
         }
         console.log('✅ Dev-акаунт готов');
@@ -151,6 +155,16 @@ async function checkExpiredBans() {
     } catch (e) { console.error('checkExpiredBans error:', e.message); }
 }
 
+// ══════ ONLINE: пульс ══════
+app.post('/api/heartbeat', async (req, res) => {
+    try {
+        const { userId } = req.body;
+        if (!userId) return res.status(400).json({ error: 'No userId' });
+        await User.updateOne({ id: parseInt(userId) }, { $set: { lastSeen: Date.now() } });
+        res.json({ success: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
 app.post('/api/register', async (req, res) => {
     try {
         const { login, password, name, city } = req.body;
@@ -165,7 +179,7 @@ app.post('/api/register', async (req, res) => {
             id: Date.now(), login: login.toLowerCase(), password, name,
             city: city || 'Миколаїв',
             status: 'Користувач ВМережі', role: 'User', avatarType: 'user',
-            friendsCount: 0, isBanned: false, friends: [], friendRequests: []
+            friendsCount: 0, isBanned: false, lastSeen: Date.now(), friends: [], friendRequests: []
         });
 
         await createNotification(newUser.id, 'system', {
@@ -187,6 +201,10 @@ app.post('/api/login', async (req, res) => {
         const user = await User.findOne({ login: login.toLowerCase().trim(), password });
         if (!user) return res.status(400).json({ error: "Невірний логін або пароль!" });
         if (user.isBanned) return res.status(403).json({ isBanned: true, banReason: user.banReason || 'Порушення правил', banUntil: user.banUntil });
+
+        // ══════ ONLINE: позначаємо як "онлайн" одразу після логіну ══════
+        user.lastSeen = Date.now();
+        await user.save();
 
         const { password: _, ...safe } = user.toObject();
         res.json(safe);
@@ -670,7 +688,6 @@ app.get('/api/admin/posts', async (req, res) => {
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
-// ==== НОВОЕ: накрутка лайков ====
 app.post('/api/admin/boost-likes', async (req, res) => {
     try {
         const { adminId, postId, amount } = req.body;
@@ -764,11 +781,12 @@ app.get('/api/admin/stats', async (req, res) => {
         if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
 
         const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
-        const [totalUsers, totalPosts, totalMessages, totalNotifications, bannedUsers, devUsers, activeToday] = await Promise.all([
+        const [totalUsers, totalPosts, totalMessages, totalNotifications, bannedUsers, devUsers, activeToday, onlineUsers] = await Promise.all([
             User.countDocuments(), Post.countDocuments(), Message.countDocuments(),
             Notification.countDocuments(), User.countDocuments({ isBanned: true }),
             User.countDocuments({ role: 'Developer' }),
-            User.countDocuments({ updatedAt: { $gte: new Date(dayAgo) } })
+            User.countDocuments({ updatedAt: { $gte: new Date(dayAgo) } }),
+            User.countDocuments({ lastSeen: { $gte: Date.now() - ONLINE_THRESHOLD } })
         ]);
 
         const topUsers = await User.find().sort({ friendsCount: -1 }).limit(5);
@@ -777,7 +795,7 @@ app.get('/api/admin/stats', async (req, res) => {
             return { name: safe.name, login: safe.login, friendsCount: safe.friendsCount };
         });
 
-        res.json({ totalUsers, totalPosts, totalMessages, totalNotifications, bannedUsers, devUsers, activeToday, topUsers: topClean });
+        res.json({ totalUsers, totalPosts, totalMessages, totalNotifications, bannedUsers, devUsers, activeToday, onlineUsers, topUsers: topClean });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
