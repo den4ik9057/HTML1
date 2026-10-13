@@ -164,6 +164,12 @@ body.theme-retro .blob-2 { background: #9d00ff; opacity: 0.15; }
 
 .settings-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; margin-left: 8px; font-size: 1rem; }
 .settings-btn:hover { color: #00f2fe; border-color: #00f2fe; transform: rotate(90deg); }
+.settings-btn:focus { outline: none; }
+.settings-btn { outline: none; -webkit-tap-highlight-color: transparent; }
+@media (hover: none) and (pointer: coarse) {
+    .settings-btn:hover { transform: none; color: #94a3b8; border-color: rgba(255,255,255,0.1); }
+    .settings-btn:active { transform: scale(0.92); background: rgba(255,255,255,0.1); }
+}
 
 .theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
 
@@ -304,7 +310,7 @@ body.theme-light .mobile-menu-btn { color: #1e293b; }
     .search-bar { display: none; }
     .user-mini { gap: 6px; }
     .user-mini span { display: none; }
-    .settings-btn { width: 34px; height: 34px; margin-left: 0; }
+    settings-btn { width: 34px; height: 34px; margin-left: 0; outline: none; -webkit-tap-highlight-color: transparent; }
 
     .sidebar {
         position: fixed;
