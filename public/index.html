@@ -84,9 +84,193 @@
         .admin-post-item .post-text-admin { color: #cbd5e1; font-size: 0.82rem; word-break: break-word; }
         .admin-post-item .post-stats-admin { color: #64748b; font-size: 0.7rem; margin-top: 4px; }
         .admin-empty { color: #64748b; text-align: center; padding: 30px; font-size: 0.9rem; }
+
+        /* ==================== МОБІЛЬНА АДАПТАЦІЯ ==================== */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 8px;
+            margin-right: 8px;
+            transition: color 0.2s;
+        }
+        .mobile-menu-btn:hover { color: #00f2fe; }
+        body.theme-light .mobile-menu-btn { color: #1e293b; }
+
+        .mobile-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(4px);
+            z-index: 98;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .mobile-overlay.active { display: block; opacity: 1; }
+
+        @media (max-width: 1024px) {
+            .main-layout { grid-template-columns: 200px 1fr; gap: 18px; padding: 0 15px; }
+            .right-sidebar { display: none; }
+            .search-bar { width: 220px; }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
+            .header-container { padding: 0 12px; gap: 6px; }
+            .logo span { display: none; }
+            .logo-icon { font-size: 1.5rem; }
+            .search-bar { display: none; }
+            .user-mini { gap: 6px; }
+            .user-mini span { display: none; }
+            .settings-btn { width: 34px; height: 34px; margin-left: 0; }
+
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: -300px;
+                width: 280px;
+                height: 100vh;
+                background: rgba(10, 15, 26, 0.98);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                z-index: 99;
+                padding: 70px 15px 20px;
+                overflow-y: auto;
+                transition: left 0.3s ease;
+                border-right: 1px solid rgba(255,255,255,0.08);
+                margin: 0;
+            }
+            body.theme-light .sidebar { background: rgba(241, 245, 249, 0.99); border-right-color: rgba(0,0,0,0.08); }
+            body.theme-retro .sidebar { background: rgba(10, 5, 18, 0.98); border-right-color: rgba(255,0,255,0.15); }
+            .sidebar.open { left: 0; box-shadow: 20px 0 60px rgba(0,0,0,0.5); }
+
+            .main-layout { grid-template-columns: 1fr; gap: 15px; padding: 0 10px; margin: 15px auto; }
+
+            .profile-card { flex-direction: column; align-items: center; text-align: center; padding: 20px 15px; }
+            .profile-avatar-container { width: 100%; align-items: center; }
+            .user-avatar-icon.big { width: 100px; height: 100px; font-size: 2.2rem; }
+            .info-badges { justify-content: center; flex-wrap: wrap; }
+            .stats-row { justify-content: center; gap: 20px; flex-wrap: wrap; }
+
+            .create-post-card textarea { font-size: 0.9rem; }
+            .post-actions { flex-wrap: wrap; gap: 10px; }
+
+            .modal-overlay { padding: 10px; align-items: flex-start; }
+            .modal-overlay > .glass-card {
+                max-height: 95vh !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 16px !important;
+                border-radius: 14px !important;
+            }
+
+            .admin-tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 5px; }
+            .admin-tab { white-space: nowrap; padding: 8px 12px; font-size: 0.82rem; }
+            .admin-input-group { flex-direction: column; align-items: stretch; }
+            .admin-input-group input,
+            .admin-input-group select,
+            .admin-input-group button { width: 100% !important; }
+            .admin-stat-grid { grid-template-columns: repeat(2, 1fr); }
+
+            #messenger-section { height: auto !important; max-height: none !important; }
+            #messenger-section > div:last-child { flex-direction: column !important; }
+            #messenger-chats-list {
+                width: 100% !important;
+                border-right: none !important;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+                max-height: 200px;
+                padding-right: 0 !important;
+                padding-bottom: 10px;
+            }
+
+            .right-sidebar {
+                display: block;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 90;
+                padding: 0 8px 8px;
+                margin: 0;
+                pointer-events: none;
+            }
+            .right-sidebar .player-widget {
+                pointer-events: auto;
+                max-height: 64px;
+                overflow: hidden;
+                transition: max-height 0.35s ease;
+                border-radius: 14px;
+                padding: 12px 40px 12px 14px;
+                position: relative;
+            }
+            .right-sidebar .player-widget.expanded { max-height: 70vh; overflow-y: auto; }
+            .right-sidebar .player-widget h3 { display: none; }
+            .right-sidebar .player-widget:not(.expanded) .time-slider-container,
+            .right-sidebar .player-widget:not(.expanded) .player-controls,
+            .right-sidebar .player-widget:not(.expanded) .mini-playlist { display: none; }
+            .right-sidebar .player-widget:not(.expanded) .now-playing { margin-bottom: 0; cursor: pointer; }
+            .right-sidebar .player-widget:not(.expanded) .now-playing .track-details .artist { font-size: 0.7rem; }
+            .right-sidebar .player-widget::after {
+                content: '▲';
+                position: absolute;
+                top: 12px;
+                right: 14px;
+                font-size: 0.7rem;
+                color: #64748b;
+                transition: transform 0.3s;
+            }
+            .right-sidebar .player-widget.expanded::after { content: '▼'; }
+
+            body { padding-bottom: 85px; }
+
+            .victoria-float-btn { bottom: 90px; left: 15px; width: 50px; height: 50px; font-size: 1.2rem; }
+            .victoria-chat-container {
+                left: 10px;
+                right: 10px;
+                bottom: 150px;
+                width: auto;
+                height: 60vh;
+                max-height: 500px;
+            }
+
+            #friends-list > div,
+            #search-results-container > div,
+            #friend-requests-list > div {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 10px !important;
+            }
+            #friends-list > div > div:last-child,
+            #search-results-container > div > div:last-child { flex-wrap: wrap; justify-content: flex-end; }
+
+            #view-user-actions { flex-direction: column; }
+            #view-user-actions button { width: 100%; }
+        }
+
+        @media (max-width: 480px) {
+            .user-avatar-icon.big { width: 80px; height: 80px; font-size: 1.8rem; }
+            .glass-card { padding: 14px; border-radius: 14px; }
+            .stat-item strong { font-size: 1rem; }
+            .stat-item span { font-size: 0.7rem; }
+            h2 { font-size: 1rem !important; }
+            .admin-stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .admin-stat-card { padding: 10px; }
+            .admin-stat-card .value { font-size: 1.2rem; }
+            .post-header h4 { font-size: 0.85rem; }
+            .header-container { height: 56px; }
+            .logo { font-size: 1.1rem; }
+            .btn-glow { padding: 10px 14px; font-size: 0.85rem; }
+            .admin-btn { padding: 8px 10px; font-size: 0.75rem; }
+        }
     </style>
 </head>
 <body>
+
+    <div id="mobile-overlay" class="mobile-overlay" onclick="toggleMobileMenu()"></div>
 
     <div class="blob blob-1"></div>
     <div class="blob blob-2"></div>
@@ -284,6 +468,9 @@
 
     <header class="top-header">
         <div class="header-container">
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()" aria-label="Меню">
+                <i class="fa-solid fa-bars"></i>
+            </button>
             <div class="logo">
                 <i class="fa-solid fa-bolt logo-icon"></i> 
                 <span>ВМережі</span>
@@ -1362,9 +1549,7 @@
             });
             const data = await res.json();
             if (data.success) {
-                if (userId === currentUser.id) {
-                    await loadUserData();
-                }
+                if (userId === currentUser.id) { await loadUserData(); }
                 await loadAdminUsers();
             }
         }
@@ -1866,6 +2051,50 @@
             const s = Math.floor(sec % 60);
             return `${m}:${s < 10 ? '0' : ''}${s}`;
         }
+
+        // ==================== МОБІЛЬНЕ МЕНЮ ====================
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
+        }
+
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth <= 768) {
+                const navItem = e.target.closest('.sidebar .nav-item');
+                if (navItem && navItem.querySelector('a')) {
+                    setTimeout(() => {
+                        const sidebar = document.querySelector('.sidebar');
+                        const overlay = document.getElementById('mobile-overlay');
+                        sidebar.classList.remove('open');
+                        overlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }, 100);
+                }
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth <= 768) {
+                const playerWidget = document.querySelector('.right-sidebar .player-widget');
+                if (!playerWidget) return;
+                if (e.target.closest('.now-playing') && !e.target.closest('button')) {
+                    playerWidget.classList.toggle('expanded');
+                }
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                const sidebar = document.querySelector('.sidebar');
+                const overlay = document.getElementById('mobile-overlay');
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
     </script>
 </body>
 </html>
