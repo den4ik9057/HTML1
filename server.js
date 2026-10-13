@@ -19,7 +19,7 @@ const musicDir = path.join(__dirname, 'public', 'music');
 if (!fs.existsSync(musicDir)) fs.mkdirSync(musicDir, { recursive: true });
 
 if (!MONGODB_URI) {
-    console.error('❌ MONGODB_URI не задан! Добавь переменную в Render → Environment');
+    console.error('❌ MONGODB_URI не задан!');
     process.exit(1);
 }
 
@@ -134,6 +134,15 @@ async function checkExpiredBans() {
         await u.save();
         await createNotification(u.id, 'unban', {});
     }
+}
+
+function requireDeveloper(req, res) {
+    const userId = parseInt(req.body.adminId || req.query.adminId);
+    if (!userId) { res.status(403).json({ error: 'Немає прав' }); return null; }
+    return User.findOne({ id: userId }).then(u => {
+        if (!u || u.role !== 'Developer') { res.status(403).json({ error: 'Немає прав' }); return null; }
+        return u;
+    });
 }
 
 app.post('/api/register', async (req, res) => {
@@ -559,29 +568,44 @@ app.get('/api/users/:id', async (req, res) => {
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
+// ==================== ADMIN API ====================
+
 app.get('/api/admin/users', async (req, res) => {
     try {
         await checkExpiredBans();
-        const users = await User.find();
+        const adminId = parseInt(req.query.adminId);
+        const admin = await User.findOne({ id: adminId });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
+        const users = await User.find().sort({ createdAt: -1 });
         res.json(users.map(u => { const { password, ...safe } = u.toObject(); return safe; }));
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
+// Накрутка друзей ЛЮБОМУ пользователю
 app.post('/api/admin/boost', async (req, res) => {
     try {
-        const { userId, amount } = req.body;
+        const { adminId, userId, amount } = req.body;
+        const admin = await User.findOne({ id: parseInt(adminId) });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
         const user = await User.findOne({ id: parseInt(userId) });
-        if (!user) return res.status(404).json({ error: "Користувача не знайдено" });
+        if (!user) return res.status(404).json({ error: 'Користувача не знайдено' });
         user.friendsCount += parseInt(amount) || 0;
+        if (user.friendsCount < 0) user.friendsCount = 0;
         await user.save();
         const { password: _, ...safe } = user.toObject();
         res.json({ success: true, user: safe });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
+// Бан / Разбан
 app.post('/api/admin/ban', async (req, res) => {
     try {
-        const { userId, reason, durationMinutes } = req.body;
+        const { adminId, userId, reason, durationMinutes } = req.body;
+        const admin = await User.findOne({ id: parseInt(adminId) });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
         const user = await User.findOne({ id: parseInt(userId) });
         if (!user) return res.status(404).json({ error: "Не знайдено" });
         user.isBanned = !user.isBanned;
@@ -597,11 +621,222 @@ app.post('/api/admin/ban', async (req, res) => {
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
+// Изменение роли
+app.post('/api/admin/change-role', async (req, res) => {
+    try {
+        const { adminId, userId, role } = req.body;
+        const admin = await User.findOne({ id: parseInt(adminId) });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
+        const validRoles = ['User', 'Moderator', 'Developer'];
+        if (!validRoles.includes(role)) return res.status(400).json({ error: 'Невірна роль' });
+
+        const user = await User.findOne({ id: parseInt(userId) });
+        if (!user) return res.status(404).json({ error: 'Не знайдено' });
+        user.role = role;
+        if (role === 'Developer') user.avatarType = 'dev';
+        else if (user.avatarType === 'dev') user.avatarType = 'user';
+        await user.save();
+        const { password: _, ...safe } = user.toObject();
+        res.json({ success: true, user: safe });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
+// Сброс пароля
+app.post('/api/admin/reset-password', async (req, res) => {
+    try {
+        const { adminId, userId, newPassword } = req.body;
+        const admin = await User.findOne({ id: parseInt(adminId) });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
+        if (!newPassword || newPassword.length < 4) return res.status(400).json({ error: 'Пароль занадто короткий' });
+        const user = await User.findOne({ id: parseInt(userId) });
+        if (!user) return res.status(404).json({ error: 'Не знайдено' });
+        user.password = newPassword;
+        await user.save();
+        res.json({ success: true, newPassword });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
+// Удаление пользователя
+app.post('/api/admin/delete-user', async (req, res) => {
+    try {
+        const { adminId, userId } = req.body;
+        const admin = await User.findOne({ id: parseInt(adminId) });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
+        const targetId = parseInt(userId);
+        if (targetId === admin.id) return res.status(400).json({ error: 'Не можна видалити себе' });
+
+        const user = await User.findOne({ id: targetId });
+        if (!user) return res.status(404).json({ error: 'Не знайдено' });
+
+        // Убираем из друзей у всех
+        await User.updateMany(
+            { friends: targetId },
+            { $pull: { friends: targetId } }
+        );
+        await User.updateMany(
+            { friendRequests: targetId },
+            { $pull: { friendRequests: targetId } }
+        );
+
+        // Удаляем посты, сообщения, уведомления
+        await Post.deleteMany({ authorId: targetId });
+        await Message.deleteMany({ $or: [{ from: targetId }, { to: targetId }] });
+        await Notification.deleteMany({ $or: [{ userId: targetId }, { fromUserId: targetId }] });
+
+        await User.deleteOne({ id: targetId });
+        res.json({ success: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
+// Список друзей пользователя
+app.get('/api/admin/user-friends/:userId', async (req, res) => {
+    try {
+        const adminId = parseInt(req.query.adminId);
+        const admin = await User.findOne({ id: adminId });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
+        const user = await User.findOne({ id: parseInt(req.params.userId) });
+        if (!user) return res.status(404).json({ error: 'Не знайдено' });
+
+        const friends = await User.find({ id: { $in: user.friends } });
+        res.json(friends.map(f => { const { password, ...safe } = f.toObject(); return safe; }));
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
+// Получить все посты (для админа)
+app.get('/api/admin/posts', async (req, res) => {
+    try {
+        const adminId = parseInt(req.query.adminId);
+        const admin = await User.findOne({ id: adminId });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
+        const posts = await Post.find().sort({ createdAt: -1 }).limit(200);
+        res.json(posts);
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
+// Удалить пост по ID (админ)
+app.post('/api/admin/delete-post', async (req, res) => {
+    try {
+        const { adminId, postId } = req.body;
+        const admin = await User.findOne({ id: parseInt(adminId) });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
+        await Post.deleteOne({ id: parseInt(postId) });
+        await Notification.deleteMany({ postId: parseInt(postId) });
+        res.json({ success: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
+// Удалить ВСЕ посты юзера
+app.post('/api/admin/delete-user-posts', async (req, res) => {
+    try {
+        const { adminId, userId } = req.body;
+        const admin = await User.findOne({ id: parseInt(adminId) });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
+        const result = await Post.deleteMany({ authorId: parseInt(userId) });
+        res.json({ success: true, deleted: result.deletedCount });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
+// Очистка всех постов
 app.post('/api/admin/clear-posts', async (req, res) => {
     try {
+        const { adminId } = req.body;
+        const admin = await User.findOne({ id: parseInt(adminId) });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
         await Post.deleteMany({});
         await Notification.deleteMany({ type: { $in: ['like', 'popular'] } });
         res.json({ success: true });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
+// Глобальное объявление
+app.post('/api/admin/broadcast', async (req, res) => {
+    try {
+        const { adminId, title, text } = req.body;
+        const admin = await User.findOne({ id: parseInt(adminId) });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
+        if (!title && !text) return res.status(400).json({ error: 'Порожнє оголошення' });
+
+        const users = await User.find();
+        let count = 0;
+        for (const u of users) {
+            await createNotification(u.id, 'system', {
+                title: title || '📢 Системне оголошення',
+                text: text || ''
+            });
+            count++;
+        }
+        res.json({ success: true, sent: count });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
+// Очистить все чаты
+app.post('/api/admin/clear-messages', async (req, res) => {
+    try {
+        const { adminId } = req.body;
+        const admin = await User.findOne({ id: parseInt(adminId) });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
+        const result = await Message.deleteMany({});
+        res.json({ success: true, deleted: result.deletedCount });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
+// Очистить все уведомления
+app.post('/api/admin/clear-notifications', async (req, res) => {
+    try {
+        const { adminId } = req.body;
+        const admin = await User.findOne({ id: parseInt(adminId) });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
+        const result = await Notification.deleteMany({});
+        res.json({ success: true, deleted: result.deletedCount });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
+// Статистика
+app.get('/api/admin/stats', async (req, res) => {
+    try {
+        const adminId = parseInt(req.query.adminId);
+        const admin = await User.findOne({ id: adminId });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+
+        const now = new Date();
+        const dayAgo = now.getTime() - 24 * 60 * 60 * 1000;
+
+        const [
+            totalUsers, totalPosts, totalMessages, totalNotifications,
+            bannedUsers, devUsers,
+            activeToday
+        ] = await Promise.all([
+            User.countDocuments(),
+            Post.countDocuments(),
+            Message.countDocuments(),
+            Notification.countDocuments(),
+            User.countDocuments({ isBanned: true }),
+            User.countDocuments({ role: 'Developer' }),
+            User.countDocuments({ updatedAt: { $gte: new Date(dayAgo) } })
+        ]);
+
+        const topUsers = await User.find().sort({ friendsCount: -1 }).limit(5);
+        const topClean = topUsers.map(u => {
+            const { password, ...safe } = u.toObject();
+            return { name: safe.name, login: safe.login, friendsCount: safe.friendsCount };
+        });
+
+        res.json({
+            totalUsers, totalPosts, totalMessages, totalNotifications,
+            bannedUsers, devUsers, activeToday,
+            topUsers: topClean
+        });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
