@@ -42,6 +42,198 @@
             document.addEventListener('dragstart', function(e) { if (e.target.tagName === 'IMG') e.preventDefault(); });
         })();
     </script>
+    <style>
+        .admin-tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .admin-tab {
+            padding: 10px 16px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-bottom: 2px solid transparent;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .admin-tab:hover { color: #00f2fe; }
+        .admin-tab.active {
+            color: #00f2fe;
+            border-bottom-color: #00f2fe;
+        }
+        .admin-search {
+            width: 100%;
+            padding: 10px 14px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: #fff;
+            outline: none;
+            font-family: inherit;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        .admin-search:focus { border-color: #00f2fe; }
+        .admin-user-card {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 14px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .admin-user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .admin-user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .admin-user-info strong { color: #fff; font-size: 0.95rem; }
+        .admin-user-info span { color: #94a3b8; font-size: 0.8rem; }
+        .admin-role-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .admin-role-badge.developer { background: rgba(0,242,254,0.2); color: #00f2fe; }
+        .admin-role-badge.moderator { background: rgba(155,89,182,0.2); color: #b794f4; }
+        .admin-role-badge.user { background: rgba(255,255,255,0.1); color: #cbd5e1; }
+        .admin-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .admin-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.78rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: 0.2s;
+            color: #fff;
+        }
+        .admin-btn:hover { transform: translateY(-1px); }
+        .admin-btn.ban { background: #ff0055; }
+        .admin-btn.unban { background: #00ff88; color: #000; }
+        .admin-btn.boost { background: #00f2fe; color: #000; }
+        .admin-btn.role { background: #b794f4; color: #000; }
+        .admin-btn.password { background: #ffb800; color: #000; }
+        .admin-btn.delete { background: #8b0000; }
+        .admin-btn.friends { background: #334155; }
+        .admin-btn.info { background: #334155; }
+        .admin-input-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+        .admin-input-group input,
+        .admin-input-group select {
+            padding: 6px 10px;
+            background: #000;
+            border: 1px solid #333;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            outline: none;
+            font-family: inherit;
+        }
+        .admin-input-group input:focus,
+        .admin-input-group select:focus { border-color: #00f2fe; }
+        .admin-input-group input.flex-grow { flex-grow: 1; min-width: 120px; }
+        .admin-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .admin-stat-card {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 14px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .admin-stat-card i {
+            font-size: 1.4rem;
+            color: #00f2fe;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .admin-stat-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            display: block;
+        }
+        .admin-stat-card .label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 4px;
+            display: block;
+        }
+        .admin-post-item {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        .admin-post-item .post-content-admin {
+            flex-grow: 1;
+            min-width: 0;
+        }
+        .admin-post-item .post-author-admin {
+            color: #00f2fe;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+        .admin-post-item .post-text-admin {
+            color: #cbd5e1;
+            font-size: 0.82rem;
+            word-break: break-word;
+        }
+        .admin-post-item .post-stats-admin {
+            color: #64748b;
+            font-size: 0.7rem;
+            margin-top: 4px;
+        }
+        .admin-empty {
+            color: #64748b;
+            text-align: center;
+            padding: 30px;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
 
@@ -121,36 +313,94 @@
         </div>
     </div>
 
+    <!-- ===== НОВАЯ ПАНЕЛЬ РАЗРОБОТЧИКА ===== -->
     <div id="admin-modal" class="modal-overlay" style="display: none;">
-        <div class="glass-card" style="width: 100%; max-width: 650px; text-align: left; max-height: 90vh; display: flex; flex-direction: column;">
+        <div class="glass-card" style="width: 100%; max-width: 800px; text-align: left; max-height: 92vh; display: flex; flex-direction: column;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 15px;">
                 <h2><i class="fa-solid fa-shield-halved" style="color: #00f2fe;"></i> Панель Розробника</h2>
                 <button onclick="closeAdminModal()" style="background:none; border:none; color:#fff; cursor:pointer; font-size:1.2rem;"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div style="overflow-y: auto; display: flex; flex-direction: column; gap: 20px; padding-right: 5px;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                    <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                        <label style="font-size:0.85rem; color:#00f2fe; display:block; margin-bottom:8px;">Накрутка друзів:</label>
-                        <div style="display:flex; gap:8px;">
-                            <input type="number" id="admin-boost-amount" value="100" style="width:80px; padding:8px; background:#000; border:1px solid #333; color:#fff; border-radius:8px; outline:none;">
-                            <button onclick="adminBoostFriends()" class="btn-glow" style="padding:8px 12px; font-size:0.85rem; flex-grow:1;">Додати</button>
+
+            <div class="admin-tabs">
+                <button class="admin-tab active" onclick="switchAdminTab('users')" id="admin-tab-users">
+                    <i class="fa-solid fa-users"></i> Користувачі
+                </button>
+                <button class="admin-tab" onclick="switchAdminTab('posts')" id="admin-tab-posts">
+                    <i class="fa-solid fa-newspaper"></i> Пости
+                </button>
+                <button class="admin-tab" onclick="switchAdminTab('system')" id="admin-tab-system">
+                    <i class="fa-solid fa-gears"></i> Система
+                </button>
+                <button class="admin-tab" onclick="switchAdminTab('stats')" id="admin-tab-stats">
+                    <i class="fa-solid fa-chart-line"></i> Статистика
+                </button>
+            </div>
+
+            <div style="overflow-y: auto; flex-grow: 1; padding-right: 5px;">
+
+                <!-- Вкладка: Користувачі -->
+                <div id="admin-panel-users">
+                    <input type="text" class="admin-search" id="admin-users-search" placeholder="🔍 Пошук за ім'ям або логіном..." oninput="renderAdminUsers()">
+                    <div id="admin-users-list"></div>
+                </div>
+
+                <!-- Вкладка: Пости -->
+                <div id="admin-panel-posts" style="display: none;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+                        <input type="text" class="admin-search" id="admin-posts-search" placeholder="🔍 Пошук по тексту або автору..." oninput="renderAdminPosts()" style="margin-bottom: 0; flex-grow: 1;">
+                        <button onclick="loadAdminPosts()" class="admin-btn boost"><i class="fa-solid fa-rotate"></i> Оновити</button>
+                    </div>
+                    <div id="admin-posts-list"></div>
+                </div>
+
+                <!-- Вкладка: Система -->
+                <div id="admin-panel-system" style="display: none;">
+                    <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(0,242,254,0.2);">
+                        <h3 style="color: #00f2fe; font-size: 1rem; margin-bottom: 10px;"><i class="fa-solid fa-bullhorn"></i> Глобальне оголошення</h3>
+                        <p style="color: #94a3b8; font-size: 0.82rem; margin-bottom: 10px;">Надіслати сповіщення всім користувачам мережі</p>
+                        <input type="text" id="broadcast-title" placeholder="Заголовок..." style="width: 100%; padding: 8px 12px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; outline: none; margin-bottom: 8px; font-family: inherit;">
+                        <textarea id="broadcast-text" placeholder="Текст оголошення..." style="width: 100%; height: 70px; padding: 8px 12px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; outline: none; resize: none; font-family: inherit; margin-bottom: 10px;"></textarea>
+                        <button onclick="adminBroadcast()" class="admin-btn boost" style="width: 100%; padding: 10px;"><i class="fa-solid fa-paper-plane"></i> Надіслати всім</button>
+                    </div>
+
+                    <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(255,0,85,0.2);">
+                        <h3 style="color: #ff0055; font-size: 1rem; margin-bottom: 10px;"><i class="fa-solid fa-broom"></i> Очищення</h3>
+                        <p style="color: #94a3b8; font-size: 0.82rem; margin-bottom: 10px;">Ці дії незворотні! Будьте обережні.</p>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button onclick="adminClearAllPosts()" class="admin-btn delete"><i class="fa-solid fa-trash"></i> Всі пости</button>
+                            <button onclick="adminClearAllMessages()" class="admin-btn delete"><i class="fa-solid fa-comment-slash"></i> Всі чати</button>
+                            <button onclick="adminClearAllNotifications()" class="admin-btn delete"><i class="fa-solid fa-bell-slash"></i> Всі сповіщення</button>
                         </div>
                     </div>
-                    <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                        <label style="font-size:0.85rem; color:#ff0055; display:block; margin-bottom:8px;">Очищення стрічки:</label>
-                        <button onclick="adminClearPosts()" class="btn-glow" style="background:#ff0055; color:#fff; width:100%; padding:8px; font-size:0.85rem;">Видалити всі пости</button>
+
+                    <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+                        <h3 style="color: #fff; font-size: 1rem; margin-bottom: 10px;"><i class="fa-solid fa-info-circle" style="color: #00f2fe;"></i> Інформація</h3>
+                        <div style="color: #94a3b8; font-size: 0.82rem; line-height: 1.6;">
+                            <div>• Сервер: <span style="color: #00ff88;">Render.com</span></div>
+                            <div>• База: <span style="color: #00ff88;">MongoDB Atlas</span></div>
+                            <div>• AI: <span style="color: #00ff88;">Groq (llama-3.3-70b)</span></div>
+                            <div>• Версія: <span style="color: #00f2fe;">ВМережі v1.0</span></div>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label style="font-size:0.9rem; color:#00f2fe; display:block; margin-bottom:10px;"><i class="fa-solid fa-users-gear"></i> Керування користувачами:</label>
-                    <div id="admin-users-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto;"></div>
+
+                <!-- Вкладка: Статистика -->
+                <div id="admin-panel-stats" style="display: none;">
+                    <div class="admin-stat-grid" id="admin-stats-grid"></div>
+                    <div class="glass-card" style="padding: 14px;">
+                        <h3 style="color: #00f2fe; font-size: 1rem; margin-bottom: 10px;"><i class="fa-solid fa-trophy"></i> Топ-5 за друзями</h3>
+                        <div id="admin-top-users"></div>
+                    </div>
                 </div>
+
             </div>
+
             <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px; margin-top: 15px; text-align: right;">
                 <button onclick="closeAdminModal()" class="btn-glow" style="background:#334155; color:#fff; padding: 8px 20px;">Закрити</button>
             </div>
         </div>
     </div>
+    <!-- ===== КОНЕЦ ПАНЕЛИ ===== -->
 
     <div id="auth-modal" class="modal-overlay">
         <div class="glass-card auth-card">
@@ -445,6 +695,10 @@
         let previousTabId = 'tab-news';
         let currentViewUserId = null;
 
+        let adminUsersCache = [];
+        let adminPostsCache = [];
+        let currentAdminTab = 'users';
+
         const audio = document.getElementById('audio-player');
         const ADMIN_PASS_HASH = '0x' + '1de';
 
@@ -501,7 +755,7 @@
             initNavigation();
             initAudioEvents();
 
-                        setInterval(() => {
+            setInterval(() => {
                 if (document.hidden) return;
                 if (currentUser) {
                     loadUserData();
@@ -515,7 +769,9 @@
                     loadMessengerMessages(activeMessengerUserId, true);
                 }
                 if (document.getElementById('admin-modal').style.display === 'flex') {
-                    loadAdminUsers();
+                    if (currentAdminTab === 'users') loadAdminUsers(true);
+                    else if (currentAdminTab === 'posts') loadAdminPosts(true);
+                    else if (currentAdminTab === 'stats') loadAdminStats();
                 }
             }, 8000);
 
@@ -1063,60 +1319,369 @@
             });
         }
 
+        // ==================== ADMIN PANEL ====================
+
         function openAdminPanel() {
             if (!currentUser || currentUser.role !== 'Developer') return alert('❌ У вас немає доступу!');
             const pass = prompt('Введіть пароль розробника:');
             if (pass === ADMIN_PASS_HASH) {
                 document.getElementById('admin-modal').style.display = 'flex';
-                loadAdminUsers();
+                switchAdminTab('users');
             } else alert('❌ Невірний пароль!');
         }
 
-        function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
+        function closeAdminModal() {
+            document.getElementById('admin-modal').style.display = 'none';
+        }
 
-        async function loadAdminUsers() {
-            const res = await fetch('/api/admin/users');
-            if (!res.ok) return;
-            const users = await res.json();
+        function switchAdminTab(tab) {
+            currentAdminTab = tab;
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('admin-tab-' + tab).classList.add('active');
+            document.getElementById('admin-panel-users').style.display = 'none';
+            document.getElementById('admin-panel-posts').style.display = 'none';
+            document.getElementById('admin-panel-system').style.display = 'none';
+            document.getElementById('admin-panel-stats').style.display = 'none';
+            document.getElementById('admin-panel-' + tab).style.display = 'block';
+
+            if (tab === 'users') loadAdminUsers();
+            else if (tab === 'posts') loadAdminPosts();
+            else if (tab === 'stats') loadAdminStats();
+        }
+
+        async function loadAdminUsers(background = false) {
+            if (!currentUser || currentUser.role !== 'Developer') return;
+            try {
+                const res = await fetch(`/api/admin/users?adminId=${currentUser.id}`);
+                if (!res.ok) return;
+                adminUsersCache = await res.json();
+                renderAdminUsers();
+            } catch (e) { console.error(e); }
+        }
+
+        function renderAdminUsers() {
             const listEl = document.getElementById('admin-users-list');
+            const search = (document.getElementById('admin-users-search').value || '').toLowerCase().trim();
+            let users = adminUsersCache;
+            if (search) {
+                users = users.filter(u => 
+                    (u.name || '').toLowerCase().includes(search) || 
+                    (u.login || '').toLowerCase().includes(search)
+                );
+            }
+            if (users.length === 0) {
+                listEl.innerHTML = `<div class="admin-empty">Нікого не знайдено</div>`;
+                return;
+            }
             listEl.innerHTML = '';
             users.forEach(u => {
                 const isSelf = u.id === currentUser.id;
-                listEl.innerHTML += `<div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); padding: 12px; border-radius: 10px; display: flex; flex-direction: column; gap: 8px;"><div style="display: flex; justify-content: space-between; align-items: center;"><div><strong style="color: #fff;">${u.name}</strong> <span style="color: #94a3b8; font-size: 0.8rem;">(@${u.login})</span></div><span style="font-size: 0.8rem; color: ${u.isBanned ? '#ff0055' : '#00ff88'}; font-weight: 600;">${u.isBanned ? '🔴 Забанений' : '🟢 Активний'}</span></div>${!isSelf ? `<div style="display: flex; gap: 8px; align-items: center;"><input type="text" id="ban-reason-${u.id}" placeholder="Причина..." value="${u.banReason || ''}" style="flex-grow: 1; padding: 6px 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 6px; font-size: 0.85rem; outline: none;"><select id="ban-duration-${u.id}" style="padding: 6px; background: #000; border: 1px solid #333; color: #fff; border-radius: 6px; font-size: 0.85rem; outline: none;"><option value="0">Назавжди</option><option value="1">1 хв</option><option value="60">1 год</option><option value="1440">24 год</option><option value="10080">7 днів</option></select><button onclick="adminToggleBan(${u.id})" style="background: ${u.isBanned ? '#00ff88' : '#ff0055'}; color: ${u.isBanned ? '#000' : '#fff'}; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85rem;">${u.isBanned ? 'Розбанити' : 'Забанити'}</button></div>` : '<div style="font-size: 0.75rem; color: #64748b; font-style: italic;">Це ваш акаунт</div>'}</div>`;
+                const roleClass = u.role === 'Developer' ? 'developer' : u.role === 'Moderator' ? 'moderator' : 'user';
+                const banStatus = u.isBanned ? '🔴 Забанений' : '🟢 Активний';
+                const banColor = u.isBanned ? '#ff0055' : '#00ff88';
+
+                let actionsHtml = '';
+                if (!isSelf) {
+                    actionsHtml = `
+                        <div class="admin-input-group">
+                            <input type="text" id="ban-reason-${u.id}" placeholder="Причина бану..." value="${u.banReason || ''}" class="flex-grow">
+                            <select id="ban-duration-${u.id}">
+                                <option value="0">Назавжди</option>
+                                <option value="1">1 хв</option>
+                                <option value="60">1 год</option>
+                                <option value="1440">24 год</option>
+                                <option value="10080">7 днів</option>
+                            </select>
+                            <button onclick="adminToggleBan(${u.id})" class="admin-btn ${u.isBanned ? 'unban' : 'ban'}">
+                                <i class="fa-solid ${u.isBanned ? 'fa-unlock' : 'fa-ban'}"></i>
+                                ${u.isBanned ? 'Розбанити' : 'Забанити'}
+                            </button>
+                        </div>
+                        <div class="admin-input-group">
+                            <input type="number" id="boost-${u.id}" placeholder="Друзів" value="100" style="width: 80px;">
+                            <button onclick="adminBoostUser(${u.id})" class="admin-btn boost">
+                                <i class="fa-solid fa-user-plus"></i> Накрутити
+                            </button>
+                            <select id="role-select-${u.id}">
+                                <option value="User" ${u.role === 'User' ? 'selected' : ''}>User</option>
+                                <option value="Moderator" ${u.role === 'Moderator' ? 'selected' : ''}>Moderator</option>
+                                <option value="Developer" ${u.role === 'Developer' ? 'selected' : ''}>Developer</option>
+                            </select>
+                            <button onclick="adminChangeRole(${u.id})" class="admin-btn role">
+                                <i class="fa-solid fa-user-shield"></i> Змінити роль
+                            </button>
+                        </div>
+                        <div class="admin-input-group">
+                            <input type="text" id="new-pass-${u.id}" placeholder="Новий пароль..." class="flex-grow">
+                            <button onclick="adminResetPassword(${u.id})" class="admin-btn password">
+                                <i class="fa-solid fa-key"></i> Скинути пароль
+                            </button>
+                            <button onclick="adminViewFriends(${u.id}, '${u.name.replace(/'/g, "\\'")}')" class="admin-btn friends">
+                                <i class="fa-solid fa-users"></i> Друзі
+                            </button>
+                            <button onclick="adminDeleteUserPost(${u.id}, '${u.name.replace(/'/g, "\\'")}')" class="admin-btn friends">
+                                <i class="fa-solid fa-newspaper"></i> Видалити пости
+                            </button>
+                            <button onclick="adminDeleteUser(${u.id}, '${u.name.replace(/'/g, "\\'")}')" class="admin-btn delete">
+                                <i class="fa-solid fa-trash"></i> Видалити
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    actionsHtml = `<div style="font-size: 0.75rem; color: #64748b; font-style: italic;">Це ваш акаунт</div>`;
+                }
+
+                listEl.innerHTML += `
+                    <div class="admin-user-card">
+                        <div class="admin-user-header">
+                            <div class="admin-user-info">
+                                <strong>${u.name} <span style="color: #94a3b8; font-weight: 400;">(@${u.login})</span></strong>
+                                <span>${u.city} • ${u.friendsCount} друзів • ID: ${u.id}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <span class="admin-role-badge ${roleClass}">${u.role}</span>
+                                <span style="color: ${banColor}; font-size: 0.8rem; font-weight: 600;">${banStatus}</span>
+                            </div>
+                        </div>
+                        ${actionsHtml}
+                    </div>
+                `;
             });
         }
 
-        async function adminToggleBan(id) {
-            const reasonInput = document.getElementById(`ban-reason-${id}`);
-            const durationSelect = document.getElementById(`ban-duration-${id}`);
-            const reason = reasonInput ? reasonInput.value.trim() : "";
+        async function adminToggleBan(userId) {
+            const reasonInput = document.getElementById(`ban-reason-${userId}`);
+            const durationSelect = document.getElementById(`ban-duration-${userId}`);
+            const reason = reasonInput ? reasonInput.value.trim() : '';
             const durationMinutes = durationSelect ? durationSelect.value : 0;
             await fetch('/api/admin/ban', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: id, reason, durationMinutes })
+                body: JSON.stringify({ adminId: currentUser.id, userId, reason, durationMinutes })
             });
             loadAdminUsers();
         }
 
-        async function adminBoostFriends() {
-            const amount = document.getElementById('admin-boost-amount').value;
-            const res = await fetch('/api/admin/boost', {
+        async function adminBoostUser(userId) {
+            const amount = document.getElementById(`boost-${userId}`).value;
+            await fetch('/api/admin/boost', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: currentUser.id, amount })
+                body: JSON.stringify({ adminId: currentUser.id, userId, amount })
             });
-            const data = await res.json();
-            if (data.user) { currentUser = data.user; localStorage.setItem('vmereshi_user', JSON.stringify(currentUser)); updateProfileUI(); alert('✅ Друзів додано!'); }
+            loadAdminUsers();
+            if (userId === currentUser.id) loadUserData();
         }
 
-        async function adminClearPosts() {
-            if (confirm('Видалити всі пости?')) {
-                await fetch('/api/admin/clear-posts', { method: 'POST' });
-                loadPosts();
-                alert('✅ Видалено!');
+        async function adminChangeRole(userId) {
+            const role = document.getElementById(`role-select-${userId}`).value;
+            const res = await fetch('/api/admin/change-role', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminId: currentUser.id, userId, role })
+            });
+            const data = await res.json();
+            if (data.success) alert(`✅ Роль змінено на ${role}`);
+            loadAdminUsers();
+        }
+
+        async function adminResetPassword(userId) {
+            const input = document.getElementById(`new-pass-${userId}`);
+            const newPassword = input.value.trim();
+            if (!newPassword) return alert('Введіть новий пароль!');
+            if (newPassword.length < 4) return alert('Мінімум 4 символи!');
+            const res = await fetch('/api/admin/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminId: currentUser.id, userId, newPassword })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`✅ Пароль змінено на: ${data.newPassword}\n\nСкопіюйте його та передайте користувачу!`);
+                input.value = '';
             }
         }
+
+        async function adminViewFriends(userId, userName) {
+            const res = await fetch(`/api/admin/user-friends/${userId}?adminId=${currentUser.id}`);
+            if (!res.ok) return alert('Помилка');
+            const friends = await res.json();
+            let msg = `👥 Друзі користувача ${userName}:\n\n`;
+            if (friends.length === 0) msg += 'Список порожній';
+            else friends.forEach((f, i) => { msg += `${i + 1}. ${f.name} (@${f.login})\n`; });
+            alert(msg);
+        }
+
+        async function adminDeleteUserPost(userId, userName) {
+            if (!confirm(`Видалити ВСІ пости користувача ${userName}?`)) return;
+            const res = await fetch('/api/admin/delete-user-posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminId: currentUser.id, userId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`✅ Видалено ${data.deleted} постів`);
+                loadPosts();
+            }
+        }
+
+        async function adminDeleteUser(userId, userName) {
+            if (!confirm(`⚠️ ВИДАЛИТИ ${userName}?\n\nЦе незворотно! Всі пости, повідомлення, друзі — зникнуть.`)) return;
+            if (!confirm(`Точно? Останнє попередження.`)) return;
+            const res = await fetch('/api/admin/delete-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminId: currentUser.id, userId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('✅ Користувача видалено');
+                loadAdminUsers();
+                loadPosts();
+            } else alert(data.error || 'Помилка');
+        }
+
+        async function loadAdminPosts(background = false) {
+            if (!currentUser || currentUser.role !== 'Developer') return;
+            try {
+                const res = await fetch(`/api/admin/posts?adminId=${currentUser.id}`);
+                if (!res.ok) return;
+                adminPostsCache = await res.json();
+                renderAdminPosts();
+            } catch (e) { console.error(e); }
+        }
+
+        function renderAdminPosts() {
+            const listEl = document.getElementById('admin-posts-list');
+            const search = (document.getElementById('admin-posts-search').value || '').toLowerCase().trim();
+            let posts = adminPostsCache;
+            if (search) {
+                posts = posts.filter(p => 
+                    (p.text || '').toLowerCase().includes(search) || 
+                    (p.author || '').toLowerCase().includes(search)
+                );
+            }
+            if (posts.length === 0) {
+                listEl.innerHTML = `<div class="admin-empty">Немає постів</div>`;
+                return;
+            }
+            listEl.innerHTML = '';
+            posts.forEach(p => {
+                listEl.innerHTML += `
+                    <div class="admin-post-item">
+                        <div class="post-content-admin">
+                            <div class="post-author-admin">${p.author}</div>
+                            <div class="post-text-admin">${(p.text || '').substring(0, 200) || '[Медіа-пост]'}</div>
+                            <div class="post-stats-admin">❤️ ${p.likes} • ID: ${p.id}</div>
+                        </div>
+                        <button onclick="adminDeletePost(${p.id})" class="admin-btn delete" style="flex-shrink: 0;">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        async function adminDeletePost(postId) {
+            if (!confirm('Видалити цей пост?')) return;
+            const res = await fetch('/api/admin/delete-post', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminId: currentUser.id, postId })
+            });
+            const data = await res.json();
+            if (data.success) {
+                loadAdminPosts();
+                loadPosts();
+            }
+        }
+
+        async function adminBroadcast() {
+            const title = document.getElementById('broadcast-title').value.trim();
+            const text = document.getElementById('broadcast-text').value.trim();
+            if (!title && !text) return alert('Введіть заголовок або текст!');
+            if (!confirm('Надіслати всім користувачам?')) return;
+            const res = await fetch('/api/admin/broadcast', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminId: currentUser.id, title, text })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`✅ Оголошення надіслано ${data.sent} користувачам`);
+                document.getElementById('broadcast-title').value = '';
+                document.getElementById('broadcast-text').value = '';
+            }
+        }
+
+        async function adminClearAllPosts() {
+            if (!confirm('⚠️ Видалити ВСІ пости на сайті? Це незворотно!')) return;
+            const res = await fetch('/api/admin/clear-posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminId: currentUser.id })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('✅ Всі пости видалено');
+                loadPosts();
+                loadAdminPosts();
+            }
+        }
+
+        async function adminClearAllMessages() {
+            if (!confirm('⚠️ Видалити ВСІ повідомлення? Це незворотно!')) return;
+            const res = await fetch('/api/admin/clear-messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminId: currentUser.id })
+            });
+            const data = await res.json();
+            if (data.success) alert(`✅ Видалено ${data.deleted} повідомлень`);
+        }
+
+        async function adminClearAllNotifications() {
+            if (!confirm('⚠️ Видалити ВСІ сповіщення у всіх? Це незворотно!')) return;
+            const res = await fetch('/api/admin/clear-notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminId: currentUser.id })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`✅ Видалено ${data.deleted} сповіщень`);
+                loadNotifications();
+            }
+        }
+
+        async function loadAdminStats() {
+            if (!currentUser || currentUser.role !== 'Developer') return;
+            try {
+                const res = await fetch(`/api/admin/stats?adminId=${currentUser.id}`);
+                if (!res.ok) return;
+                const s = await res.json();
+                const grid = document.getElementById('admin-stats-grid');
+                grid.innerHTML = `
+                    <div class="admin-stat-card"><i class="fa-solid fa-users"></i><span class="value">${s.totalUsers}</span><span class="label">Всього юзерів</span></div>
+                    <div class="admin-stat-card"><i class="fa-solid fa-newspaper"></i><span class="value">${s.totalPosts}</span><span class="label">Постів</span></div>
+                    <div class="admin-stat-card"><i class="fa-solid fa-comments"></i><span class="value">${s.totalMessages}</span><span class="label">Повідомлень</span></div>
+                    <div class="admin-stat-card"><i class="fa-solid fa-bell"></i><span class="value">${s.totalNotifications}</span><span class="label">Сповіщень</span></div>
+                    <div class="admin-stat-card"><i class="fa-solid fa-ban" style="color: #ff0055;"></i><span class="value">${s.bannedUsers}</span><span class="label">Забанено</span></div>
+                    <div class="admin-stat-card"><i class="fa-solid fa-code" style="color: #00f2fe;"></i><span class="value">${s.devUsers}</span><span class="label">Розробників</span></div>
+                    <div class="admin-stat-card"><i class="fa-solid fa-fire" style="color: #ffb800;"></i><span class="value">${s.activeToday}</span><span class="label">Активних 24г</span></div>
+                `;
+
+                const topEl = document.getElementById('admin-top-users');
+                topEl.innerHTML = '';
+                s.topUsers.forEach((u, i) => {
+                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+                    topEl.innerHTML += `<div style="display:flex; justify-content:space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05);"><span style="color: #fff; font-size: 0.85rem;">${medal} ${u.name} <span style="color: #94a3b8;">(@${u.login})</span></span><span style="color: #00f2fe; font-weight: 600;">${u.friendsCount} 👥</span></div>`;
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        // ==================== END ADMIN ====================
 
         function toggleVictoriaChat() {
             const chat = document.getElementById('victoria-chat-modal');
