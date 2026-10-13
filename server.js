@@ -154,30 +154,18 @@ async function checkExpiredBans() {
 app.post('/api/register', async (req, res) => {
     try {
         const { login, password, name, city } = req.body;
-
-        if (!login || !password || !name) {
-            return res.status(400).json({ error: "Заповніть всі обов'язкові поля!" });
-        }
-        if (login.length < 3) {
-            return res.status(400).json({ error: "Логін має бути не менше 3 символів" });
-        }
-        if (password.length < 4) {
-            return res.status(400).json({ error: "Пароль має бути не менше 4 символів" });
-        }
+        if (!login || !password || !name) return res.status(400).json({ error: "Заповніть всі обов'язкові поля!" });
+        if (login.length < 3) return res.status(400).json({ error: "Логін має бути не менше 3 символів" });
+        if (password.length < 4) return res.status(400).json({ error: "Пароль має бути не менше 4 символів" });
 
         const existingLogin = await User.findOne({ login: login.toLowerCase() });
         if (existingLogin) return res.status(400).json({ error: "Користувач з таким логіном вже існує!" });
 
         const newUser = await User.create({
-            id: Date.now(),
-            login: login.toLowerCase(),
-            password,
-            name,
+            id: Date.now(), login: login.toLowerCase(), password, name,
             city: city || 'Миколаїв',
-            status: 'Користувач ВМережі',
-            role: 'User', avatarType: 'user',
-            friendsCount: 0, isBanned: false,
-            friends: [], friendRequests: []
+            status: 'Користувач ВМережі', role: 'User', avatarType: 'user',
+            friendsCount: 0, isBanned: false, friends: [], friendRequests: []
         });
 
         await createNotification(newUser.id, 'system', {
@@ -194,14 +182,9 @@ app.post('/api/login', async (req, res) => {
     try {
         await checkExpiredBans();
         const { login, password } = req.body;
+        if (!login || !password) return res.status(400).json({ error: "Введіть логін та пароль" });
 
-        if (!login || !password) {
-            return res.status(400).json({ error: "Введіть логін та пароль" });
-        }
-
-        const identifier = login.toLowerCase().trim();
-        const user = await User.findOne({ login: identifier, password });
-
+        const user = await User.findOne({ login: login.toLowerCase().trim(), password });
         if (!user) return res.status(400).json({ error: "Невірний логін або пароль!" });
         if (user.isBanned) return res.status(403).json({ isBanned: true, banReason: user.banReason || 'Порушення правил', banUntil: user.banUntil });
 
@@ -239,9 +222,7 @@ app.post('/api/messages', async (req, res) => {
         const { from, to, text } = req.body;
         if (!text || !from || !to) return res.status(400).json({ error: "Порожнє повідомлення" });
         const newMsg = await Message.create({
-            id: Date.now(),
-            from: parseInt(from), to: parseInt(to),
-            text,
+            id: Date.now(), from: parseInt(from), to: parseInt(to), text,
             date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             read: false
         });
@@ -276,16 +257,14 @@ app.get('/api/messages/unread/:userId', async (req, res) => {
 app.get('/api/notifications/:userId', async (req, res) => {
     try {
         const userId = parseInt(req.params.userId);
-        const notifs = await Notification.find({ userId }).sort({ date: -1 });
-        res.json(notifs);
+        res.json(await Notification.find({ userId }).sort({ date: -1 }));
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
 app.get('/api/notifications/unread/:userId', async (req, res) => {
     try {
         const userId = parseInt(req.params.userId);
-        const count = await Notification.countDocuments({ userId, read: false });
-        res.json({ count });
+        res.json({ count: await Notification.countDocuments({ userId, read: false }) });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
@@ -352,8 +331,7 @@ app.post('/api/victoria/chat', async (req, res) => {
             try {
                 const parsed = JSON.parse(rawData);
                 if (parsed.error) return res.json({ reply: `Помилка: ${parsed.error.message}` });
-                const reply = parsed.choices?.[0]?.message?.content?.trim() || "Не вдалося отримати відповідь.";
-                res.json({ reply });
+                res.json({ reply: parsed.choices?.[0]?.message?.content?.trim() || "Не вдалося отримати відповідь." });
             } catch (e) { res.json({ reply: "Помилка обробки відповіді." }); }
         });
     });
@@ -572,6 +550,8 @@ app.get('/api/users/:id', async (req, res) => {
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
+// ==================== ADMIN ====================
+
 app.get('/api/admin/users', async (req, res) => {
     try {
         await checkExpiredBans();
@@ -690,6 +670,22 @@ app.get('/api/admin/posts', async (req, res) => {
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
+// ==== НОВОЕ: накрутка лайков ====
+app.post('/api/admin/boost-likes', async (req, res) => {
+    try {
+        const { adminId, postId, amount } = req.body;
+        const admin = await User.findOne({ id: parseInt(adminId) });
+        if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
+        const post = await Post.findOne({ id: parseInt(postId) });
+        if (!post) return res.status(404).json({ error: 'Пост не знайдено' });
+        const amt = parseInt(amount) || 0;
+        post.likes = Math.max(0, post.likes + amt);
+        if (post.likes < 10) post.popularNotified = false;
+        await post.save();
+        res.json({ success: true, likes: post.likes });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
+});
+
 app.post('/api/admin/delete-post', async (req, res) => {
     try {
         const { adminId, postId } = req.body;
@@ -767,15 +763,10 @@ app.get('/api/admin/stats', async (req, res) => {
         const admin = await User.findOne({ id: adminId });
         if (!admin || admin.role !== 'Developer') return res.status(403).json({ error: 'Немає прав' });
 
-        const now = new Date();
-        const dayAgo = now.getTime() - 24 * 60 * 60 * 1000;
-
+        const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
         const [totalUsers, totalPosts, totalMessages, totalNotifications, bannedUsers, devUsers, activeToday] = await Promise.all([
-            User.countDocuments(),
-            Post.countDocuments(),
-            Message.countDocuments(),
-            Notification.countDocuments(),
-            User.countDocuments({ isBanned: true }),
+            User.countDocuments(), Post.countDocuments(), Message.countDocuments(),
+            Notification.countDocuments(), User.countDocuments({ isBanned: true }),
             User.countDocuments({ role: 'Developer' }),
             User.countDocuments({ updatedAt: { $gte: new Date(dayAgo) } })
         ]);
