@@ -43,7 +43,6 @@ mongoose.connection.on('reconnected', () => console.log('✅ Mongoose reconnecte
 const userSchema = new mongoose.Schema({
     id: { type: Number, unique: true, required: true },
     login: { type: String, unique: true, required: true, lowercase: true },
-    email: { type: String, lowercase: true, sparse: true, default: null },
     password: String,
     name: String,
     city: { type: String, default: 'Миколаїв' },
@@ -109,12 +108,10 @@ async function ensureDevUser() {
             devUser.password = devPass;
             devUser.role = 'Developer';
             devUser.avatarType = 'dev';
-            if (!devUser.email) devUser.email = 'den4ik9057@gmail.com';
             await devUser.save();
         } else {
             await User.create({
                 id: 1, login: 'denis', password: devPass,
-                email: 'den4ik9057@gmail.com',
                 name: 'Денис Павловський', city: 'Миколаїв',
                 status: 'Засновник та Розробник ВМережі ⚡', role: 'Developer',
                 avatarType: 'dev', friendsCount: 142,
@@ -154,35 +151,26 @@ async function checkExpiredBans() {
     } catch (e) { console.error('checkExpiredBans error:', e.message); }
 }
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 app.post('/api/register', async (req, res) => {
     try {
-        const { login, email, password, name, city } = req.body;
+        const { login, password, name, city } = req.body;
 
-        if (!login || !email || !password || !name) {
+        if (!login || !password || !name) {
             return res.status(400).json({ error: "Заповніть всі обов'язкові поля!" });
-        }
-        if (!EMAIL_REGEX.test(email)) {
-            return res.status(400).json({ error: "Невірний формат email (приклад: user@gmail.com)" });
         }
         if (login.length < 3) {
             return res.status(400).json({ error: "Логін має бути не менше 3 символів" });
         }
-        if (password.length < 6) {
-            return res.status(400).json({ error: "Пароль має бути не менше 6 символів" });
+        if (password.length < 4) {
+            return res.status(400).json({ error: "Пароль має бути не менше 4 символів" });
         }
 
         const existingLogin = await User.findOne({ login: login.toLowerCase() });
         if (existingLogin) return res.status(400).json({ error: "Користувач з таким логіном вже існує!" });
 
-        const existingEmail = await User.findOne({ email: email.toLowerCase() });
-        if (existingEmail) return res.status(400).json({ error: "Цей email вже зареєстрований!" });
-
         const newUser = await User.create({
             id: Date.now(),
             login: login.toLowerCase(),
-            email: email.toLowerCase(),
             password,
             name,
             city: city || 'Миколаїв',
@@ -208,36 +196,17 @@ app.post('/api/login', async (req, res) => {
         const { login, password } = req.body;
 
         if (!login || !password) {
-            return res.status(400).json({ error: "Введіть email/логін та пароль" });
+            return res.status(400).json({ error: "Введіть логін та пароль" });
         }
 
         const identifier = login.toLowerCase().trim();
-        const user = await User.findOne({
-            $or: [{ login: identifier }, { email: identifier }],
-            password
-        });
+        const user = await User.findOne({ login: identifier, password });
 
-        if (!user) return res.status(400).json({ error: "Невірний email/логін або пароль!" });
+        if (!user) return res.status(400).json({ error: "Невірний логін або пароль!" });
         if (user.isBanned) return res.status(403).json({ isBanned: true, banReason: user.banReason || 'Порушення правил', banUntil: user.banUntil });
 
         const { password: _, ...safe } = user.toObject();
         res.json(safe);
-    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
-});
-
-app.post('/api/auth/check', async (req, res) => {
-    try {
-        const { login, email } = req.body;
-        const result = { loginTaken: false, emailTaken: false };
-        if (login) {
-            const u = await User.findOne({ login: login.toLowerCase() });
-            result.loginTaken = !!u;
-        }
-        if (email) {
-            const u = await User.findOne({ email: email.toLowerCase() });
-            result.emailTaken = !!u;
-        }
-        res.json(result);
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
@@ -248,22 +217,6 @@ app.post('/api/profile/update', async (req, res) => {
         if (!user) return res.status(404).json({ error: "Користувача не знайдено" });
         if (status !== undefined) user.status = status;
         if (city !== undefined) user.city = city;
-        await user.save();
-        const { password: _, ...safe } = user.toObject();
-        res.json({ success: true, user: safe });
-    } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
-});
-
-app.post('/api/profile/change-email', async (req, res) => {
-    try {
-        const { id, email, password } = req.body;
-        const user = await User.findOne({ id: parseInt(id) });
-        if (!user) return res.status(404).json({ error: "Користувача не знайдено" });
-        if (user.password !== password) return res.status(403).json({ error: "Невірний пароль" });
-        if (!EMAIL_REGEX.test(email)) return res.status(400).json({ error: "Невірний формат email" });
-        const existing = await User.findOne({ email: email.toLowerCase(), id: { $ne: user.id } });
-        if (existing) return res.status(400).json({ error: "Email вже зайнятий" });
-        user.email = email.toLowerCase();
         await user.save();
         const { password: _, ...safe } = user.toObject();
         res.json({ success: true, user: safe });
@@ -497,7 +450,7 @@ app.get('/api/users/search', async (req, res) => {
         const users = await User.find({
             $or: [{ name: { $regex: query, $options: 'i' } }, { login: { $regex: query, $options: 'i' } }]
         });
-        res.json(users.map(u => { const { password, email, ...safe } = u.toObject(); return safe; }));
+        res.json(users.map(u => { const { password, ...safe } = u.toObject(); return safe; }));
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
@@ -541,7 +494,7 @@ app.post('/api/friends/accept', async (req, res) => {
         await createNotification(requester.id, 'friend_accept', {
             fromUserId: user.id, fromUserName: user.name, fromUserAvatar: user.avatarType
         });
-        const { password: _, email: __, ...safe } = user.toObject();
+        const { password: _, ...safe } = user.toObject();
         res.json({ success: true, user: safe });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
@@ -555,7 +508,7 @@ app.post('/api/friends/reject', async (req, res) => {
         user.friendRequests = user.friendRequests.filter(id => id !== requesterId);
         await user.save();
         await Notification.deleteMany({ type: 'friend_request', userId: user.id, fromUserId: requesterId });
-        const { password: _, email: __, ...safe } = user.toObject();
+        const { password: _, ...safe } = user.toObject();
         res.json({ success: true, user: safe });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
@@ -578,7 +531,7 @@ app.post('/api/friends/remove', async (req, res) => {
         await createNotification(friend.id, 'friend_removed', {
             fromUserId: user.id, fromUserName: user.name, fromUserAvatar: user.avatarType
         });
-        const { password: _, email: __, ...safe } = user.toObject();
+        const { password: _, ...safe } = user.toObject();
         res.json({ success: true, user: safe });
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
@@ -607,8 +560,8 @@ app.get('/api/users/:id', async (req, res) => {
         const sentRequestsList = await User.find({ friendRequests: user.id });
         const userPosts = await Post.find({ authorId: user.id }).sort({ createdAt: -1 });
 
-        const clean = (arr) => arr.map(u => { const { password, email, ...safe } = u.toObject(); return safe; });
-        const { password: _, email: __, ...safeUser } = user.toObject();
+        const clean = (arr) => arr.map(u => { const { password, ...safe } = u.toObject(); return safe; });
+        const { password: _, ...safeUser } = user.toObject();
         res.json({
             user: safeUser,
             friendsList: clean(friendsList),
@@ -724,7 +677,7 @@ app.get('/api/admin/user-friends/:userId', async (req, res) => {
         const user = await User.findOne({ id: parseInt(req.params.userId) });
         if (!user) return res.status(404).json({ error: 'Не знайдено' });
         const friends = await User.find({ id: { $in: user.friends } });
-        res.json(friends.map(f => { const { password, email, ...safe } = f.toObject(); return safe; }));
+        res.json(friends.map(f => { const { password, ...safe } = f.toObject(); return safe; }));
     } catch (e) { console.error(e); res.status(500).json({ error: 'Помилка сервера' }); }
 });
 
@@ -829,7 +782,7 @@ app.get('/api/admin/stats', async (req, res) => {
 
         const topUsers = await User.find().sort({ friendsCount: -1 }).limit(5);
         const topClean = topUsers.map(u => {
-            const { password, email, ...safe } = u.toObject();
+            const { password, ...safe } = u.toObject();
             return { name: safe.name, login: safe.login, friendsCount: safe.friendsCount };
         });
 
