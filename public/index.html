@@ -43,98 +43,23 @@
         })();
     </script>
     <style>
-        .admin-tabs {
-            display: flex;
-            gap: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .admin-tab {
-            padding: 10px 16px;
-            background: none;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            border-bottom: 2px solid transparent;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .admin-tabs { display: flex; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; flex-wrap: wrap; }
+        .admin-tab { padding: 10px 16px; background: none; border: none; color: #94a3b8; cursor: pointer; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid transparent; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
         .admin-tab:hover { color: #00f2fe; }
-        .admin-tab.active {
-            color: #00f2fe;
-            border-bottom-color: #00f2fe;
-        }
-        .admin-search {
-            width: 100%;
-            padding: 10px 14px;
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            color: #fff;
-            outline: none;
-            font-family: inherit;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-        }
+        .admin-tab.active { color: #00f2fe; border-bottom-color: #00f2fe; }
+        .admin-search { width: 100%; padding: 10px 14px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; outline: none; font-family: inherit; font-size: 0.9rem; margin-bottom: 15px; }
         .admin-search:focus { border-color: #00f2fe; }
-        .admin-user-card {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.08);
-            padding: 14px;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .admin-user-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .admin-user-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
+        .admin-user-card { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); padding: 14px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+        .admin-user-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .admin-user-info { display: flex; flex-direction: column; gap: 4px; }
         .admin-user-info strong { color: #fff; font-size: 0.95rem; }
         .admin-user-info span { color: #94a3b8; font-size: 0.8rem; }
-        .admin-role-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            margin-left: 6px;
-        }
+        .admin-role-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 600; margin-left: 6px; }
         .admin-role-badge.developer { background: rgba(0,242,254,0.2); color: #00f2fe; }
         .admin-role-badge.moderator { background: rgba(155,89,182,0.2); color: #b794f4; }
         .admin-role-badge.user { background: rgba(255,255,255,0.1); color: #cbd5e1; }
-        .admin-actions {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .admin-btn {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.78rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: 0.2s;
-            color: #fff;
-        }
+        .admin-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .admin-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 5px; transition: 0.2s; color: #fff; }
         .admin-btn:hover { transform: translateY(-1px); }
         .admin-btn.ban { background: #ff0055; }
         .admin-btn.unban { background: #00ff88; color: #000; }
@@ -144,95 +69,21 @@
         .admin-btn.delete { background: #8b0000; }
         .admin-btn.friends { background: #334155; }
         .admin-btn.info { background: #334155; }
-        .admin-input-group {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-            width: 100%;
-            flex-wrap: wrap;
-        }
-        .admin-input-group input,
-        .admin-input-group select {
-            padding: 6px 10px;
-            background: #000;
-            border: 1px solid #333;
-            color: #fff;
-            border-radius: 6px;
-            font-size: 0.82rem;
-            outline: none;
-            font-family: inherit;
-        }
-        .admin-input-group input:focus,
-        .admin-input-group select:focus { border-color: #00f2fe; }
+        .admin-input-group { display: flex; gap: 6px; align-items: center; width: 100%; flex-wrap: wrap; }
+        .admin-input-group input, .admin-input-group select { padding: 6px 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 6px; font-size: 0.82rem; outline: none; font-family: inherit; }
+        .admin-input-group input:focus, .admin-input-group select:focus { border-color: #00f2fe; }
         .admin-input-group input.flex-grow { flex-grow: 1; min-width: 120px; }
-        .admin-stat-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .admin-stat-card {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.08);
-            padding: 14px;
-            border-radius: 12px;
-            text-align: center;
-        }
-        .admin-stat-card i {
-            font-size: 1.4rem;
-            color: #00f2fe;
-            margin-bottom: 8px;
-            display: block;
-        }
-        .admin-stat-card .value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #fff;
-            display: block;
-        }
-        .admin-stat-card .label {
-            font-size: 0.75rem;
-            color: #94a3b8;
-            margin-top: 4px;
-            display: block;
-        }
-        .admin-post-item {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.08);
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            align-items: flex-start;
-        }
-        .admin-post-item .post-content-admin {
-            flex-grow: 1;
-            min-width: 0;
-        }
-        .admin-post-item .post-author-admin {
-            color: #00f2fe;
-            font-weight: 600;
-            font-size: 0.85rem;
-            margin-bottom: 4px;
-        }
-        .admin-post-item .post-text-admin {
-            color: #cbd5e1;
-            font-size: 0.82rem;
-            word-break: break-word;
-        }
-        .admin-post-item .post-stats-admin {
-            color: #64748b;
-            font-size: 0.7rem;
-            margin-top: 4px;
-        }
-        .admin-empty {
-            color: #64748b;
-            text-align: center;
-            padding: 30px;
-            font-size: 0.9rem;
-        }
+        .admin-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .admin-stat-card { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); padding: 14px; border-radius: 12px; text-align: center; }
+        .admin-stat-card i { font-size: 1.4rem; color: #00f2fe; margin-bottom: 8px; display: block; }
+        .admin-stat-card .value { font-size: 1.5rem; font-weight: 700; color: #fff; display: block; }
+        .admin-stat-card .label { font-size: 0.75rem; color: #94a3b8; margin-top: 4px; display: block; }
+        .admin-post-item { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08); padding: 12px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+        .admin-post-item .post-content-admin { flex-grow: 1; min-width: 0; }
+        .admin-post-item .post-author-admin { color: #00f2fe; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; }
+        .admin-post-item .post-text-admin { color: #cbd5e1; font-size: 0.82rem; word-break: break-word; }
+        .admin-post-item .post-stats-admin { color: #64748b; font-size: 0.7rem; margin-top: 4px; }
+        .admin-empty { color: #64748b; text-align: center; padding: 30px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -313,7 +164,6 @@
         </div>
     </div>
 
-    <!-- ===== НОВАЯ ПАНЕЛЬ РАЗРОБОТЧИКА ===== -->
     <div id="admin-modal" class="modal-overlay" style="display: none;">
         <div class="glass-card" style="width: 100%; max-width: 800px; text-align: left; max-height: 92vh; display: flex; flex-direction: column;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px; margin-bottom: 15px;">
@@ -338,13 +188,11 @@
 
             <div style="overflow-y: auto; flex-grow: 1; padding-right: 5px;">
 
-                <!-- Вкладка: Користувачі -->
                 <div id="admin-panel-users">
                     <input type="text" class="admin-search" id="admin-users-search" placeholder="🔍 Пошук за ім'ям або логіном..." oninput="renderAdminUsers()">
                     <div id="admin-users-list"></div>
                 </div>
 
-                <!-- Вкладка: Пости -->
                 <div id="admin-panel-posts" style="display: none;">
                     <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
                         <input type="text" class="admin-search" id="admin-posts-search" placeholder="🔍 Пошук по тексту або автору..." oninput="renderAdminPosts()" style="margin-bottom: 0; flex-grow: 1;">
@@ -353,7 +201,6 @@
                     <div id="admin-posts-list"></div>
                 </div>
 
-                <!-- Вкладка: Система -->
                 <div id="admin-panel-system" style="display: none;">
                     <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(0,242,254,0.2);">
                         <h3 style="color: #00f2fe; font-size: 1rem; margin-bottom: 10px;"><i class="fa-solid fa-bullhorn"></i> Глобальне оголошення</h3>
@@ -384,7 +231,6 @@
                     </div>
                 </div>
 
-                <!-- Вкладка: Статистика -->
                 <div id="admin-panel-stats" style="display: none;">
                     <div class="admin-stat-grid" id="admin-stats-grid"></div>
                     <div class="glass-card" style="padding: 14px;">
@@ -400,7 +246,6 @@
             </div>
         </div>
     </div>
-    <!-- ===== КОНЕЦ ПАНЕЛИ ===== -->
 
     <div id="auth-modal" class="modal-overlay">
         <div class="glass-card auth-card">
@@ -1321,6 +1166,37 @@
 
         // ==================== ADMIN PANEL ====================
 
+        function getAdminFormState() {
+            const state = { values: {}, focusedId: null, selectionStart: 0, selectionEnd: 0 };
+            const inputs = document.querySelectorAll('#admin-users-list input, #admin-users-list select, #admin-posts-search, #admin-users-search, #broadcast-title, #broadcast-text');
+            inputs.forEach(el => {
+                if (el.id && el.value !== undefined && el.value !== '') state.values[el.id] = el.value;
+            });
+            const activeEl = document.activeElement;
+            if (activeEl && activeEl.id && activeEl.tagName !== 'BODY') {
+                state.focusedId = activeEl.id;
+                try {
+                    state.selectionStart = activeEl.selectionStart || 0;
+                    state.selectionEnd = activeEl.selectionEnd || 0;
+                } catch(e) {}
+            }
+            return state;
+        }
+
+        function restoreAdminFormState(state) {
+            Object.keys(state.values).forEach(id => {
+                const el = document.getElementById(id);
+                if (el && !el.value) el.value = state.values[id];
+            });
+            if (state.focusedId) {
+                const el = document.getElementById(state.focusedId);
+                if (el) {
+                    el.focus();
+                    try { el.setSelectionRange(state.selectionStart, state.selectionEnd); } catch(e) {}
+                }
+            }
+        }
+
         function openAdminPanel() {
             if (!currentUser || currentUser.role !== 'Developer') return alert('❌ У вас немає доступу!');
             const pass = prompt('Введіть пароль розробника:');
@@ -1360,6 +1236,7 @@
         }
 
         function renderAdminUsers() {
+            const state = getAdminFormState();
             const listEl = document.getElementById('admin-users-list');
             const search = (document.getElementById('admin-users-search').value || '').toLowerCase().trim();
             let users = adminUsersCache;
@@ -1371,6 +1248,7 @@
             }
             if (users.length === 0) {
                 listEl.innerHTML = `<div class="admin-empty">Нікого не знайдено</div>`;
+                restoreAdminFormState(state);
                 return;
             }
             listEl.innerHTML = '';
@@ -1384,7 +1262,7 @@
                 if (!isSelf) {
                     actionsHtml = `
                         <div class="admin-input-group">
-                            <input type="text" id="ban-reason-${u.id}" placeholder="Причина бану..." value="${u.banReason || ''}" class="flex-grow">
+                            <input type="text" id="ban-reason-${u.id}" placeholder="Причина бану..." value="${state.values['ban-reason-' + u.id] || u.banReason || ''}" class="flex-grow">
                             <select id="ban-duration-${u.id}">
                                 <option value="0">Назавжди</option>
                                 <option value="1">1 хв</option>
@@ -1398,7 +1276,7 @@
                             </button>
                         </div>
                         <div class="admin-input-group">
-                            <input type="number" id="boost-${u.id}" placeholder="Друзів" value="100" style="width: 80px;">
+                            <input type="number" id="boost-${u.id}" placeholder="Друзів" value="${state.values['boost-' + u.id] || '100'}" style="width: 80px;">
                             <button onclick="adminBoostUser(${u.id})" class="admin-btn boost">
                                 <i class="fa-solid fa-user-plus"></i> Накрутити
                             </button>
@@ -1412,7 +1290,7 @@
                             </button>
                         </div>
                         <div class="admin-input-group">
-                            <input type="text" id="new-pass-${u.id}" placeholder="Новий пароль..." class="flex-grow">
+                            <input type="text" id="new-pass-${u.id}" placeholder="Новий пароль..." value="${state.values['new-pass-' + u.id] || ''}" class="flex-grow">
                             <button onclick="adminResetPassword(${u.id})" class="admin-btn password">
                                 <i class="fa-solid fa-key"></i> Скинути пароль
                             </button>
@@ -1447,6 +1325,7 @@
                     </div>
                 `;
             });
+            restoreAdminFormState(state);
         }
 
         async function adminToggleBan(userId) {
@@ -1459,7 +1338,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ adminId: currentUser.id, userId, reason, durationMinutes })
             });
-            loadAdminUsers();
+            if (userId === currentUser.id) await loadUserData();
+            await loadAdminUsers();
         }
 
         async function adminBoostUser(userId) {
@@ -1469,8 +1349,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ adminId: currentUser.id, userId, amount })
             });
-            loadAdminUsers();
-            if (userId === currentUser.id) loadUserData();
+            if (userId === currentUser.id) await loadUserData();
+            await loadAdminUsers();
         }
 
         async function adminChangeRole(userId) {
@@ -1481,8 +1361,12 @@
                 body: JSON.stringify({ adminId: currentUser.id, userId, role })
             });
             const data = await res.json();
-            if (data.success) alert(`✅ Роль змінено на ${role}`);
-            loadAdminUsers();
+            if (data.success) {
+                if (userId === currentUser.id) {
+                    await loadUserData();
+                }
+                await loadAdminUsers();
+            }
         }
 
         async function adminResetPassword(userId) {
@@ -1553,6 +1437,7 @@
         }
 
         function renderAdminPosts() {
+            const state = getAdminFormState();
             const listEl = document.getElementById('admin-posts-list');
             const search = (document.getElementById('admin-posts-search').value || '').toLowerCase().trim();
             let posts = adminPostsCache;
@@ -1564,6 +1449,7 @@
             }
             if (posts.length === 0) {
                 listEl.innerHTML = `<div class="admin-empty">Немає постів</div>`;
+                restoreAdminFormState(state);
                 return;
             }
             listEl.innerHTML = '';
@@ -1581,6 +1467,7 @@
                     </div>
                 `;
             });
+            restoreAdminFormState(state);
         }
 
         async function adminDeletePost(postId) {
