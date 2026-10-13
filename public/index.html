@@ -501,7 +501,7 @@
             initNavigation();
             initAudioEvents();
 
-            setInterval(() => {
+                        setInterval(() => {
                 if (document.hidden) return;
                 if (currentUser) {
                     loadUserData();
@@ -513,6 +513,9 @@
                 loadPosts(true);
                 if (activeMessengerUserId && document.getElementById('tab-friends').classList.contains('active')) {
                     loadMessengerMessages(activeMessengerUserId, true);
+                }
+                if (document.getElementById('admin-modal').style.display === 'flex') {
+                    loadAdminUsers();
                 }
             }, 8000);
 
