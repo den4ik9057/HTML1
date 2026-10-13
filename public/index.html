@@ -395,7 +395,6 @@
                         <h2><i class="fa-solid fa-headphones" style="color: #00f2fe;"></i> VM Music Hub</h2>
                         <button onclick="loadMusic()" class="btn-glow" style="padding: 6px 12px; font-size: 0.85rem;"><i class="fa-solid fa-rotate"></i> Оновити</button>
                     </div>
-                    
                     <div id="vm-music-container" class="music-list"></div>
                 </div>
             </section>
@@ -427,8 +426,9 @@
     </div>
 
     <audio id="audio-player"></audio>
-    <script>
-       const ukraineCities = ["Миколаїв","Київ","Харків","Одеса","Дніпро","Запоріжжя","Львів","Кривий Ріг","Вінниця","Херсон","Полтава","Чернігів","Черкаси","Житомир","Суми","Хмельницький","Чернівці","Рівне","Кам'янське","Кропивницький","Івано-Франківськ","Кременчук","Тернопіль","Луцьк","Біла Церква","Ужгород","Нікополь","Слов'янськ","Бердянськ","Алчевськ","Павлоград","Бровари","Кам'янець-Подільський","Олександрія","Сімферополь","Севастополь","Керч","Євпаторія","Ялта","Феодосія","Джанкой","Алушта","Бахчисарай","Саки","Армянськ","Красноперекопськ","Судак","Білогірськ","Нижньогірський","Совєтський","Чорноморське","Роздольне","Первомайське","Леніне","Кіровське","Старий Крим","Алупка","Інкерман","Щолкіне","Молодіжне","Мирний"].sort();
+        <script>
+        const ukraineCities = ["Миколаїв","Київ","Харків","Одеса","Дніпро","Запоріжжя","Львів","Кривий Ріг","Вінниця","Херсон","Полтава","Чернігів","Черкаси","Житомир","Суми","Хмельницький","Чернівці","Рівне","Кам'янське","Кропивницький","Івано-Франківськ","Кременчук","Тернопіль","Луцьк","Біла Церква","Ужгород","Нікополь","Слов'янськ","Бердянськ","Алчевськ","Павлоград","Бровари","Кам'янець-Подільський","Олександрія","Сімферополь","Севастополь","Керч","Євпаторія","Ялта","Феодосія","Джанкой","Алушта","Бахчисарай","Саки","Армянськ","Красноперекопськ","Судак","Білогірськ","Нижньогірський","Совєтський","Чорноморське","Роздольне","Первомайське","Леніне","Кіровське","Старий Крим","Алупка","Інкерман","Щолкіне","Молодіжне","Мирний"].sort();
+
         let currentUser = null;
         let currentTracks = [];
         let currentTrackIndex = 0;
@@ -502,6 +502,7 @@
             initAudioEvents();
 
             setInterval(() => {
+                if (document.hidden) return;
                 if (currentUser) {
                     loadUserData();
                     updateNotificationsBadge();
@@ -513,7 +514,7 @@
                 if (activeMessengerUserId && document.getElementById('tab-friends').classList.contains('active')) {
                     loadMessengerMessages(activeMessengerUserId, true);
                 }
-            }, 2000);
+            }, 8000);
 
             document.getElementById('publish-btn').addEventListener('click', createPost);
             document.getElementById('play-main-btn').addEventListener('click', togglePlay);
@@ -549,6 +550,7 @@
             if (!currentUser) return;
             try {
                 const res = await fetch(`/api/users/${currentUser.id}`);
+                if (!res.ok) return;
                 const data = await res.json();
                 if (data.user) {
                     if (data.user.isBanned) {
@@ -575,6 +577,7 @@
             if (!currentUser) return;
             try {
                 const res = await fetch(`/api/messages/unread/${currentUser.id}`);
+                if (!res.ok) return;
                 const data = await res.json();
                 lastUnreadCount = data.count || 0;
                 const total = lastRequestsCount + lastUnreadCount;
@@ -588,6 +591,7 @@
             if (!currentUser) return;
             try {
                 const res = await fetch(`/api/notifications/unread/${currentUser.id}`);
+                if (!res.ok) return;
                 const data = await res.json();
                 lastNotifsUnread = data.count || 0;
                 const badge = document.getElementById('notifs-badge');
@@ -600,6 +604,7 @@
             if (!currentUser) return;
             try {
                 const res = await fetch(`/api/notifications/${currentUser.id}`);
+                if (!res.ok) return;
                 const notifs = await res.json();
                 renderNotifications(notifs);
             } catch (e) { console.error(e); }
@@ -726,23 +731,26 @@
 
         async function loadMessengerMessages(userId, background = false) {
             if (!activeMessengerUserId || activeMessengerUserId !== userId) return;
-            const res = await fetch(`/api/messages?user1=${currentUser.id}&user2=${userId}`);
-            const messages = await res.json();
-            const container = document.getElementById('messenger-messages-container');
-            let html = '';
-            if (messages.length === 0) {
-                html = `<div style="color:#64748b; text-align:center; font-size:0.85rem; margin:auto;"><i class="fa-solid fa-comments"></i> Почніть діалог — напишіть перше повідомлення!</div>`;
-            } else {
-                messages.forEach(m => {
-                    const isMe = m.from === currentUser.id;
-                    const decryptedText = decryptMessage(m.text);
-                    html += `<div style="display:flex; justify-content:${isMe ? 'flex-end' : 'flex-start'};"><div style="background:${isMe ? 'rgba(0,242,254,0.15)' : 'rgba(255,255,255,0.08)'}; border:1px solid ${isMe ? 'rgba(0,242,254,0.3)' : 'rgba(255,255,255,0.05)'}; padding:8px 12px; border-radius:10px; max-width:70%; font-size:0.85rem; color:#fff;"><div>${decryptedText}</div><div style="font-size:0.65rem; color:#94a3b8; text-align:right; margin-top:2px;">${m.date}</div></div></div>`;
-                });
-            }
-            container.innerHTML = html;
-            if (!background) container.scrollTop = container.scrollHeight;
-            await markChatAsRead(userId);
-            updateNotificationsBadge();
+            try {
+                const res = await fetch(`/api/messages?user1=${currentUser.id}&user2=${userId}`);
+                if (!res.ok) return;
+                const messages = await res.json();
+                const container = document.getElementById('messenger-messages-container');
+                let html = '';
+                if (messages.length === 0) {
+                    html = `<div style="color:#64748b; text-align:center; font-size:0.85rem; margin:auto;"><i class="fa-solid fa-comments"></i> Почніть діалог — напишіть перше повідомлення!</div>`;
+                } else {
+                    messages.forEach(m => {
+                        const isMe = m.from === currentUser.id;
+                        const decryptedText = decryptMessage(m.text);
+                        html += `<div style="display:flex; justify-content:${isMe ? 'flex-end' : 'flex-start'};"><div style="background:${isMe ? 'rgba(0,242,254,0.15)' : 'rgba(255,255,255,0.08)'}; border:1px solid ${isMe ? 'rgba(0,242,254,0.3)' : 'rgba(255,255,255,0.05)'}; padding:8px 12px; border-radius:10px; max-width:70%; font-size:0.85rem; color:#fff;"><div>${decryptedText}</div><div style="font-size:0.65rem; color:#94a3b8; text-align:right; margin-top:2px;">${m.date}</div></div></div>`;
+                    });
+                }
+                container.innerHTML = html;
+                if (!background) container.scrollTop = container.scrollHeight;
+                await markChatAsRead(userId);
+                updateNotificationsBadge();
+            } catch (e) { console.error(e); }
         }
 
         async function markChatAsRead(otherUserId) {
@@ -808,6 +816,7 @@
             if (!query) { container.innerHTML = ''; return; }
             try {
                 const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+                if (!res.ok) return;
                 const users = await res.json();
                 container.innerHTML = '';
                 const filtered = users.filter(u => u.id !== currentUser.id);
@@ -900,6 +909,7 @@
             }
             try {
                 const res = await fetch(`/api/users/${userId}`);
+                if (!res.ok) return;
                 const data = await res.json();
                 if (!data.user) return;
                 const u = data.user;
@@ -1063,6 +1073,7 @@
 
         async function loadAdminUsers() {
             const res = await fetch('/api/admin/users');
+            if (!res.ok) return;
             const users = await res.json();
             const listEl = document.getElementById('admin-users-list');
             listEl.innerHTML = '';
@@ -1238,6 +1249,7 @@
         async function loadPosts(background = false) {
             try {
                 const res = await fetch('/api/posts');
+                if (!res.ok) return;
                 const posts = await res.json();
                 const postsJSON = JSON.stringify(posts);
                 if (background && postsJSON === lastPostsJSON) return;
@@ -1307,6 +1319,7 @@
         async function loadMusic() {
             try {
                 const res = await fetch('/api/music');
+                if (!res.ok) return;
                 const data = await res.json();
                 const newTracksString = JSON.stringify(data);
                 if (newTracksString !== currentTracksString) {
