@@ -72,7 +72,6 @@
         }
 
         /* ══════ ONLINE STATUS DOTS ══════ */
-        .avatar-wrap-online { position: relative; display: inline-block; line-height: 0; }
         .online-dot {
             position: absolute;
             bottom: -1px;
@@ -90,10 +89,6 @@
         .online-dot.small { width: 11px; height: 11px; }
         .online-dot.tiny { width: 9px; height: 9px; border-width: 1.5px; }
 
-        .status-text-online { color: #00ff88; font-weight: 600; }
-        .status-text-offline { color: #94a3b8; font-weight: 500; }
-
-        /* ══════ ADMIN ══════ */
         .admin-tabs { display: flex; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px; flex-wrap: wrap; }
         .admin-tab { padding: 10px 16px; background: none; border: none; color: #94a3b8; cursor: pointer; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid transparent; transition: 0.2s; display: flex; align-items: center; gap: 8px; }
         .admin-tab:hover { color: #00f2fe; }
@@ -109,7 +104,6 @@
         .admin-role-badge.developer { background: rgba(0,242,254,0.2); color: #00f2fe; }
         .admin-role-badge.moderator { background: rgba(155,89,182,0.2); color: #b794f4; }
         .admin-role-badge.user { background: rgba(255,255,255,0.1); color: #cbd5e1; }
-        .admin-actions { display: flex; gap: 6px; flex-wrap: wrap; }
         .admin-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 5px; transition: 0.2s; color: #fff; }
         .admin-btn:hover { transform: translateY(-1px); }
         .admin-btn.ban { background: #ff0055; }
@@ -119,7 +113,6 @@
         .admin-btn.password { background: #ffb800; color: #000; }
         .admin-btn.delete { background: #8b0000; }
         .admin-btn.friends { background: #334155; }
-        .admin-btn.info { background: #334155; }
         .admin-input-group { display: flex; gap: 6px; align-items: center; width: 100%; flex-wrap: wrap; }
         .admin-input-group input, .admin-input-group select { padding: 6px 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 6px; font-size: 0.82rem; outline: none; font-family: inherit; }
         .admin-input-group input:focus, .admin-input-group select:focus { border-color: #00f2fe; }
@@ -383,8 +376,9 @@
                         <div style="color: #94a3b8; font-size: 0.82rem; line-height: 1.6;">
                             <div>• Сервер: <span style="color: #00ff88;">Render.com</span></div>
                             <div>• База: <span style="color: #00ff88;">MongoDB Atlas</span></div>
-                            <div>• AI: <span style="color: #00ff88;">Groq (llama-3.3-70b)</span></div>
-                            <div>• Версія: <span style="color: #00f2fe;">ВМережі v1.0</span></div>
+                            <div>• AI: <span style="color: #00ff88;">Groq (gpt-oss-120b)</span></div>
+                            <div>• Безпека: <span style="color: #00ff88;">scrypt + HMAC</span></div>
+                            <div>• Версія: <span style="color: #00f2fe;">ВМережі v1.1</span></div>
                         </div>
                     </div>
                 </div>
@@ -730,10 +724,27 @@
         let currentAdminTab = 'users';
 
         const audio = document.getElementById('audio-player');
-        const ADMIN_PASS_HASH = '0x' + '1de';
-        const ONLINE_THRESHOLD = 2 * 60 * 1000; // 2 хвилини
+        const ONLINE_THRESHOLD = 2 * 60 * 1000;
 
-        // ══════ ONLINE: допоміжні функції ══════
+        // ══════ 🔒 AUTH FETCH (JWT в заголовке) ══════
+        function authFetch(url, options = {}) {
+            const token = localStorage.getItem('vmereshi_token');
+            const headers = { ...(options.headers || {}) };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return fetch(url, { ...options, headers }).then(res => {
+                if (res.status === 401) {
+                    console.warn('Сесія застаріла, виходимо');
+                    localStorage.removeItem('vmereshi_user');
+                    localStorage.removeItem('vmereshi_token');
+                    currentUser = null;
+                    location.reload();
+                    throw new Error('Unauthorized');
+                }
+                return res;
+            });
+        }
+
+        // ══════ ONLINE helper ══════
         function isUserOnline(user) {
             if (!user || !user.lastSeen) return false;
             return (Date.now() - user.lastSeen) < ONLINE_THRESHOLD;
@@ -759,7 +770,6 @@
             return '🔴 Давно не заходив(ла)';
         }
 
-        // ══════ ONLINE: пульс кожні 30 сек ══════
         function startHeartbeat() {
             if (!currentUser) return;
             if (heartbeatInterval) clearInterval(heartbeatInterval);
@@ -771,8 +781,8 @@
                     body: JSON.stringify({ userId: currentUser.id })
                 }).catch(() => {});
             };
-            beat(); // одразу
-            heartbeatInterval = setInterval(beat, 30000); // кожні 30 сек
+            beat();
+            heartbeatInterval = setInterval(beat, 30000);
         }
 
         function stopHeartbeat() {
@@ -832,8 +842,9 @@
             initNavigation();
             initAudioEvents();
 
-            // ══════ ONLINE: після закриття/згортання — не шлемо пульс одразу, але при зворотньому фокусі — одразу ══════
-            window.addEventListener('focus', () => { if (currentUser) fetch('/api/heartbeat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser.id }) }).catch(()=>{}); });
+            window.addEventListener('focus', () => {
+                if (currentUser) fetch('/api/heartbeat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: currentUser.id }) }).catch(()=>{});
+            });
             window.addEventListener('beforeunload', stopHeartbeat);
 
             setInterval(() => {
@@ -874,15 +885,18 @@
 
         function checkAuth() {
             const savedUser = localStorage.getItem('vmereshi_user');
-            if (savedUser) {
+            const token = localStorage.getItem('vmereshi_token');
+            if (savedUser && token) {
                 currentUser = JSON.parse(savedUser);
                 document.getElementById('auth-modal').style.display = 'none';
                 updateProfileUI();
                 loadUserData();
                 updateNotificationsBadge();
                 updateNotifsBadge();
-                startHeartbeat(); // ══════ ONLINE ══════
+                startHeartbeat();
             } else {
+                localStorage.removeItem('vmereshi_user');
+                localStorage.removeItem('vmereshi_token');
                 document.getElementById('auth-modal').style.display = 'flex';
             }
         }
@@ -1070,7 +1084,6 @@
             const avatarEl = document.getElementById('messenger-target-avatar');
             avatarEl.className = `user-avatar-icon ${avatarType}`;
             avatarEl.innerHTML = getAvatarIcon(avatarType);
-            // ══════ ONLINE: статус у мессенджері ══════
             const friend = cachedFriends.find(x => x.id === userId);
             updateMessengerTargetStatus(friend);
             loadMessengerMessages(userId);
@@ -1280,7 +1293,6 @@
                 document.getElementById('view-user-login').innerText = u.login;
                 document.getElementById('view-user-role').innerText = u.role;
 
-                // ══════ ONLINE: точка + статус ══════
                 const dotEl = document.getElementById('view-user-online-dot');
                 dotEl.className = `online-dot ${isUserOnline(u) ? 'online' : 'offline'}`;
                 dotEl.style.width = '22px'; dotEl.style.height = '22px';
@@ -1358,15 +1370,18 @@
                 const data = await res.json();
                 if (res.status === 403 && data.isBanned) { showBanModal(data.banReason, data.banUntil); return; }
                 if (!res.ok) { errEl.textContent = data.error || "Помилка входу!"; errEl.style.display = 'block'; return; }
+                const token = data.token;
+                delete data.token;
                 currentUser = data;
                 localStorage.setItem('vmereshi_user', JSON.stringify(currentUser));
+                if (token) localStorage.setItem('vmereshi_token', token);
                 document.getElementById('auth-modal').style.display = 'none';
                 updateProfileUI();
                 loadPosts();
                 loadUserData();
                 updateNotificationsBadge();
                 updateNotifsBadge();
-                startHeartbeat(); // ══════ ONLINE ══════
+                startHeartbeat();
             } catch (err) { errEl.textContent = "Помилка авторизації!"; errEl.style.display = 'block'; }
         }
 
@@ -1390,21 +1405,25 @@
                 });
                 const data = await res.json();
                 if (!res.ok) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
+                const token = data.token;
+                delete data.token;
                 currentUser = data;
                 localStorage.setItem('vmereshi_user', JSON.stringify(currentUser));
+                if (token) localStorage.setItem('vmereshi_token', token);
                 document.getElementById('auth-modal').style.display = 'none';
                 updateProfileUI();
                 loadPosts();
                 loadUserData();
                 updateNotificationsBadge();
                 updateNotifsBadge();
-                startHeartbeat(); // ══════ ONLINE ══════
+                startHeartbeat();
             } catch (err) { errEl.textContent = "Помилка реєстрації!"; errEl.style.display = 'block'; }
         }
 
         function logout() {
             stopHeartbeat();
             localStorage.removeItem('vmereshi_user');
+            localStorage.removeItem('vmereshi_token');
             currentUser = null;
             location.reload();
         }
@@ -1470,11 +1489,8 @@
 
         function openAdminPanel() {
             if (!currentUser || currentUser.role !== 'Developer') return alert('❌ У вас немає доступу!');
-            const pass = prompt('Введіть пароль розробника:');
-            if (pass === ADMIN_PASS_HASH) {
-                document.getElementById('admin-modal').style.display = 'flex';
-                switchAdminTab('users');
-            } else alert('❌ Невірний пароль!');
+            document.getElementById('admin-modal').style.display = 'flex';
+            switchAdminTab('users');
         }
 
         function closeAdminModal() {
@@ -1499,7 +1515,7 @@
         async function loadAdminUsers(background = false) {
             if (!currentUser || currentUser.role !== 'Developer') return;
             try {
-                const res = await fetch(`/api/admin/users?adminId=${currentUser.id}`);
+                const res = await authFetch(`/api/admin/users`);
                 if (!res.ok) return;
                 adminUsersCache = await res.json();
                 renderAdminUsers();
@@ -1606,10 +1622,10 @@
             const durationSelect = document.getElementById(`ban-duration-${userId}`);
             const reason = reasonInput ? reasonInput.value.trim() : '';
             const durationMinutes = durationSelect ? durationSelect.value : 0;
-            await fetch('/api/admin/ban', {
+            await authFetch('/api/admin/ban', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: currentUser.id, userId, reason, durationMinutes })
+                body: JSON.stringify({ userId, reason, durationMinutes })
             });
             if (userId === currentUser.id) await loadUserData();
             await loadAdminUsers();
@@ -1617,10 +1633,10 @@
 
         async function adminBoostUser(userId) {
             const amount = document.getElementById(`boost-${userId}`).value;
-            await fetch('/api/admin/boost', {
+            await authFetch('/api/admin/boost', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: currentUser.id, userId, amount })
+                body: JSON.stringify({ userId, amount })
             });
             if (userId === currentUser.id) await loadUserData();
             await loadAdminUsers();
@@ -1628,10 +1644,10 @@
 
         async function adminChangeRole(userId) {
             const role = document.getElementById(`role-select-${userId}`).value;
-            const res = await fetch('/api/admin/change-role', {
+            const res = await authFetch('/api/admin/change-role', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: currentUser.id, userId, role })
+                body: JSON.stringify({ userId, role })
             });
             const data = await res.json();
             if (data.success) {
@@ -1645,10 +1661,10 @@
             const newPassword = input.value.trim();
             if (!newPassword) return alert('Введіть новий пароль!');
             if (newPassword.length < 4) return alert('Мінімум 4 символи!');
-            const res = await fetch('/api/admin/reset-password', {
+            const res = await authFetch('/api/admin/reset-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: currentUser.id, userId, newPassword })
+                body: JSON.stringify({ userId, newPassword })
             });
             const data = await res.json();
             if (data.success) {
@@ -1658,7 +1674,7 @@
         }
 
         async function adminViewFriends(userId, userName) {
-            const res = await fetch(`/api/admin/user-friends/${userId}?adminId=${currentUser.id}`);
+            const res = await authFetch(`/api/admin/user-friends/${userId}`);
             if (!res.ok) return alert('Помилка');
             const friends = await res.json();
             let msg = `👥 Друзі користувача ${userName}:\n\n`;
@@ -1669,10 +1685,10 @@
 
         async function adminDeleteUserPost(userId, userName) {
             if (!confirm(`Видалити ВСІ пости користувача ${userName}?`)) return;
-            const res = await fetch('/api/admin/delete-user-posts', {
+            const res = await authFetch('/api/admin/delete-user-posts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: currentUser.id, userId })
+                body: JSON.stringify({ userId })
             });
             const data = await res.json();
             if (data.success) {
@@ -1684,10 +1700,10 @@
         async function adminDeleteUser(userId, userName) {
             if (!confirm(`⚠️ ВИДАЛИТИ ${userName}?\n\nЦе незворотно! Всі пости, повідомлення, друзі — зникнуть.`)) return;
             if (!confirm(`Точно? Останнє попередження.`)) return;
-            const res = await fetch('/api/admin/delete-user', {
+            const res = await authFetch('/api/admin/delete-user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: currentUser.id, userId })
+                body: JSON.stringify({ userId })
             });
             const data = await res.json();
             if (data.success) {
@@ -1700,7 +1716,7 @@
         async function loadAdminPosts(background = false) {
             if (!currentUser || currentUser.role !== 'Developer') return;
             try {
-                const res = await fetch(`/api/admin/posts?adminId=${currentUser.id}`);
+                const res = await authFetch(`/api/admin/posts`);
                 if (!res.ok) return;
                 adminPostsCache = await res.json();
                 renderAdminPosts();
@@ -1757,10 +1773,10 @@
             const rawAmount = parseInt(input.value) || 0;
             const amount = sign * Math.abs(rawAmount);
             if (amount === 0) return alert('Введіть число більше 0!');
-            const res = await fetch('/api/admin/boost-likes', {
+            const res = await authFetch('/api/admin/boost-likes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: currentUser.id, postId, amount })
+                body: JSON.stringify({ postId, amount })
             });
             const data = await res.json();
             if (data.success) {
@@ -1773,10 +1789,10 @@
 
         async function adminDeletePost(postId) {
             if (!confirm('Видалити цей пост?')) return;
-            const res = await fetch('/api/admin/delete-post', {
+            const res = await authFetch('/api/admin/delete-post', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: currentUser.id, postId })
+                body: JSON.stringify({ postId })
             });
             const data = await res.json();
             if (data.success) {
@@ -1790,10 +1806,10 @@
             const text = document.getElementById('broadcast-text').value.trim();
             if (!title && !text) return alert('Введіть заголовок або текст!');
             if (!confirm('Надіслати всім користувачам?')) return;
-            const res = await fetch('/api/admin/broadcast', {
+            const res = await authFetch('/api/admin/broadcast', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: currentUser.id, title, text })
+                body: JSON.stringify({ title, text })
             });
             const data = await res.json();
             if (data.success) {
@@ -1805,10 +1821,9 @@
 
         async function adminClearAllPosts() {
             if (!confirm('⚠️ Видалити ВСІ пости на сайті? Це незворотно!')) return;
-            const res = await fetch('/api/admin/clear-posts', {
+            const res = await authFetch('/api/admin/clear-posts', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: currentUser.id })
+                headers: { 'Content-Type': 'application/json' }
             });
             const data = await res.json();
             if (data.success) {
@@ -1820,10 +1835,9 @@
 
         async function adminClearAllMessages() {
             if (!confirm('⚠️ Видалити ВСІ повідомлення? Це незворотно!')) return;
-            const res = await fetch('/api/admin/clear-messages', {
+            const res = await authFetch('/api/admin/clear-messages', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: currentUser.id })
+                headers: { 'Content-Type': 'application/json' }
             });
             const data = await res.json();
             if (data.success) alert(`✅ Видалено ${data.deleted} повідомлень`);
@@ -1831,10 +1845,9 @@
 
         async function adminClearAllNotifications() {
             if (!confirm('⚠️ Видалити ВСІ сповіщення у всіх? Це незворотно!')) return;
-            const res = await fetch('/api/admin/clear-notifications', {
+            const res = await authFetch('/api/admin/clear-notifications', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ adminId: currentUser.id })
+                headers: { 'Content-Type': 'application/json' }
             });
             const data = await res.json();
             if (data.success) {
@@ -1846,7 +1859,7 @@
         async function loadAdminStats() {
             if (!currentUser || currentUser.role !== 'Developer') return;
             try {
-                const res = await fetch(`/api/admin/stats?adminId=${currentUser.id}`);
+                const res = await authFetch(`/api/admin/stats`);
                 if (!res.ok) return;
                 const s = await res.json();
                 const grid = document.getElementById('admin-stats-grid');
@@ -1994,7 +2007,6 @@
             avatarEl2.className = `user-avatar-icon ${currentUser.avatarType}`;
             avatarEl1.innerHTML = getAvatarIcon(currentUser.avatarType);
             avatarEl2.innerHTML = getAvatarIcon(currentUser.avatarType);
-            // ══════ ONLINE: свій статус завжди онлайн коли є heartbeat ══════
             const ownDot = document.getElementById('profile-online-dot');
             const headDot = document.getElementById('header-online-dot');
             if (ownDot) { ownDot.className = 'online-dot online'; ownDot.style.width = '22px'; ownDot.style.height = '22px'; }
